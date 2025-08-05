@@ -19,7 +19,7 @@ public class DBConnection {
             user = props.getProperty("db.user");
             password = props.getProperty("db.password");
         } catch (Exception e) {
-            System.out.println("❌ Failed to load DB config:");
+            System.out.println("Failed to load DB config:");
             e.printStackTrace();
         }
     }
