@@ -50,7 +50,6 @@ public class SchemaBuilder {
                 name VARCHAR(100) NOT NULL,
                 description TEXT,
                 base_price DECIMAL(6,2) NOT NULL,
-                image_url VARCHAR(255),
                 is_available BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -65,7 +64,6 @@ public class SchemaBuilder {
                 name VARCHAR(100) NOT NULL,
                 description TEXT,
                 price DECIMAL(5,2) NOT NULL,
-                image_url VARCHAR(255),
                 is_available BOOLEAN DEFAULT TRUE
             )
         """;
