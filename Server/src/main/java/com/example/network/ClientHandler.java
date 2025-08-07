@@ -1,4 +1,4 @@
-package com.example;
+package com.example.network;
 
 import java.io.*;
 import java.net.Socket;
@@ -22,7 +22,7 @@ public class ClientHandler implements Runnable {
 
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
-                System.out.println("🗨Received: " + inputLine);
+                System.out.println("Received: " + inputLine);
 
                 if (inputLine.equalsIgnoreCase("exit")) {
                     out.println("Goodbye!");
