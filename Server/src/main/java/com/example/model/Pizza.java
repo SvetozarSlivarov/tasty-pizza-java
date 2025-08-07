@@ -50,11 +50,11 @@ public class Pizza {
         this.description = description;
     }
 
-    public BigDecimal getBasePrice() {
+    public BigDecimal getPrice() {
         return basePrice;
     }
 
-    public void setBasePrice(BigDecimal basePrice) {
+    public void setPrice(BigDecimal basePrice) {
         this.basePrice = basePrice;
     }
 

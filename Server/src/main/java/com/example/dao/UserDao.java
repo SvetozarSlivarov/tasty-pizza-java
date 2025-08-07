@@ -11,10 +11,9 @@ public interface UserDao {
     User findByUsername(String username);
 
     List<User> findAll();
+    boolean save(User user);
 
-    void save(User user);
+    boolean update(User user);
 
-    void update(User user);
-
-    void delete(int id);
+    boolean delete(int id);
 }

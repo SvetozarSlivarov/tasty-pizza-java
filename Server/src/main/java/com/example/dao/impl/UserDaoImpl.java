@@ -21,12 +21,13 @@ public class UserDaoImpl implements UserDao {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return extractUserFromResultSet(rs);
+                return extractUser(rs);
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return null;
     }
 
@@ -40,12 +41,13 @@ public class UserDaoImpl implements UserDao {
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return extractUserFromResultSet(rs);
+                return extractUser(rs);
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return null;
     }
 
@@ -59,7 +61,7 @@ public class UserDaoImpl implements UserDao {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                users.add(extractUserFromResultSet(rs));
+                users.add(extractUser(rs));
             }
 
         } catch (SQLException e) {
@@ -70,33 +72,28 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public void save(User user) {
+    public boolean save(User user) {
         String sql = "INSERT INTO users (fullname, username, password, role) VALUES (?, ?, ?, ?)";
-
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, user.getFullname());
             ps.setString(2, user.getUsername());
             ps.setString(3, user.getPassword());
             ps.setString(4, user.getRole().name());
 
-            ps.executeUpdate();
-
-            ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) {
-                user.setId(rs.getInt(1));
-            }
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return false;
     }
 
     @Override
-    public void update(User user) {
-        String sql = "UPDATE users SET fullname=?, username=?, password=?, role=? WHERE id=?";
-
+    public boolean update(User user) {
+        String sql = "UPDATE users SET fullname = ?, username = ?, password = ?, role = ? WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -106,29 +103,32 @@ public class UserDaoImpl implements UserDao {
             ps.setString(4, user.getRole().name());
             ps.setInt(5, user.getId());
 
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return false;
     }
 
     @Override
-    public void delete(int id) {
+    public boolean delete(int id) {
         String sql = "DELETE FROM users WHERE id = ?";
-
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
-            ps.executeUpdate();
+            return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        return false;
     }
 
-    private User extractUserFromResultSet(ResultSet rs) throws SQLException {
+    private User extractUser(ResultSet rs) throws SQLException {
         return new User(
                 rs.getInt("id"),
                 rs.getString("fullname"),
