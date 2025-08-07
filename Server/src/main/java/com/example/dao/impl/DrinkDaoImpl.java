@@ -1,82 +1,82 @@
 package com.example.dao.impl;
 
-import com.example.dao.PizzaDao;
+import com.example.dao.DrinkDao;
 import com.example.db.DBConnection;
-import com.example.model.Pizza;
+import com.example.model.Drink;
 
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PizzaDaoImpl implements PizzaDao {
+public class DrinkDaoImpl implements DrinkDao {
 
     @Override
-    public Pizza findById(int id) {
-        String sql = "SELECT * FROM pizzas WHERE id = ?";
+    public Drink findById(int id) {
+        String sql = "SELECT * FROM drinks WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return extractPizza(rs);
+                return extractDrink(rs);
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return null;
     }
 
     @Override
-    public List<Pizza> findAll() {
-        List<Pizza> pizzas = new ArrayList<>();
-        String sql = "SELECT * FROM pizzas";
+    public List<Drink> findAll() {
+        List<Drink> drinks = new ArrayList<>();
+        String sql = "SELECT * FROM drinks";
 
         try (Connection conn = DBConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                pizzas.add(extractPizza(rs));
+                drinks.add(extractDrink(rs));
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        return pizzas;
+        return drinks;
     }
     @Override
-    public List<Pizza> findAvailable(){
-        List<Pizza> pizzas = new ArrayList<>();
-        String sql = "SELECT * FROM pizzas WHERE is_available = true";
-
+    public List<Drink> findAvailable() {
+        List<Drink> drinks = new ArrayList<>();
+        String sql = "SELECT * FROM drinks WHERE is_available = true";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery())   {
+             ResultSet rs = ps.executeQuery()){
 
             while (rs.next()){
-                pizzas.add(extractPizza(rs));
+                drinks.add(extractDrink(rs));
             }
-
         } catch (SQLException e){
             e.printStackTrace();
         }
-
-        return pizzas;
+        return drinks;
     }
 
     @Override
-    public boolean save(Pizza pizza) {
-        String sql = "INSERT INTO pizzas (name, description, price, is_available) VALUES (?, ?, ?, ?)";
+    public boolean save(Drink drink) {
+        String sql = "INSERT INTO drinks (name, description, price, is_available) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, pizza.getName());
-            ps.setString(2, pizza.getDescription());
-            ps.setBigDecimal(3, pizza.getPrice());
-            ps.setBoolean(4, pizza.isAvailable());
+            ps.setString(1, drink.getName());
+            ps.setString(2, drink.getDescription());
+            ps.setBigDecimal(3, drink.getPrice());
+            ps.setBoolean(4, drink.isAvailable());
 
             return ps.executeUpdate() > 0;
 
@@ -88,16 +88,16 @@ public class PizzaDaoImpl implements PizzaDao {
     }
 
     @Override
-    public boolean update(Pizza pizza) {
-        String sql = "UPDATE pizzas SET name = ?, description = ?, price = ?, is_available = ? WHERE id = ?";
+    public boolean update(Drink drink) {
+        String sql = "UPDATE drinks SET name = ?, description = ?, price = ?, is_available = ? WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, pizza.getName());
-            ps.setString(2, pizza.getDescription());
-            ps.setBigDecimal(3, pizza.getPrice());
-            ps.setBoolean(4, pizza.isAvailable());
-            ps.setInt(5, pizza.getId());
+            ps.setString(1, drink.getName());
+            ps.setString(2, drink.getDescription());
+            ps.setBigDecimal(3, drink.getPrice());
+            ps.setBoolean(4, drink.isAvailable());
+            ps.setInt(5, drink.getId());
 
             return ps.executeUpdate() > 0;
 
@@ -110,7 +110,7 @@ public class PizzaDaoImpl implements PizzaDao {
 
     @Override
     public boolean delete(int id) {
-        String sql = "DELETE FROM pizzas WHERE id = ?";
+        String sql = "DELETE FROM drinks WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -124,8 +124,8 @@ public class PizzaDaoImpl implements PizzaDao {
         return false;
     }
 
-    private Pizza extractPizza(ResultSet rs) throws SQLException {
-        return new Pizza(
+    private Drink extractDrink(ResultSet rs) throws SQLException {
+        return new Drink(
                 rs.getInt("id"),
                 rs.getString("name"),
                 rs.getString("description"),

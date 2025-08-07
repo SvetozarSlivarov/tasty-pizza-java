@@ -20,6 +20,9 @@ public class PizzaService {
     public List<Pizza> getAllPizzas() {
         return pizzaDao.findAll();
     }
+    public List<Pizza> getAvailablePizzas() {
+        return pizzaDao.findAvailable();
+    }
 
     public boolean addPizza(Pizza pizza) {
         // TODO: Add validation
