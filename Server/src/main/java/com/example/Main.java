@@ -1,8 +1,7 @@
 package com.example;
 
 import com.example.db.DatabaseInitializer;
-import com.example.ClientHandler;
-
+import com.example.network.ClientHandler;
 
 import java.io.IOException;
 import java.net.ServerSocket;
