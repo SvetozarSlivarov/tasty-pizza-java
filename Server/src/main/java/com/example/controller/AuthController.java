@@ -38,7 +38,7 @@ public class AuthController {
         }
 
         User user = optionalUser.get();
-        user.setPassword(null); // remove sensitive data
+        user.setPassword(null);
 
         String token = UUID.randomUUID().toString();
         SessionManager.store(token, user);

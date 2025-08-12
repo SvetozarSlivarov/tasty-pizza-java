@@ -15,14 +15,14 @@ public class Drink {
         this.description = description;
         this.price = price;
         this.isAvailable = isAvailable;
-    }
+    };
     public Drink(int id, String name, String description, BigDecimal price, boolean isAvailable){
         this.id =id;
         this.name = name;
         this.description = description;
         this.price = price;
         this.isAvailable = isAvailable;
-    }
+    };
 
     public int getId() {
         return id;

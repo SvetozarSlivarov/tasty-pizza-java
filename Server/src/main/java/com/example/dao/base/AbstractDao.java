@@ -10,21 +10,21 @@ public abstract class AbstractDao {
 
     @FunctionalInterface
     public interface Binder {
-        void bind(PreparedStatement ps) throws SQLException;
+        void bind(PreparedStatement preparedStatement) throws SQLException;
     }
 
     @FunctionalInterface
     public interface Mapper<T> {
-        T map(ResultSet rs) throws SQLException;
+        T map(ResultSet resultSet) throws SQLException;
     }
 
     protected <T> List<T> queryList(String sql, Binder binder, Mapper<T> mapper) throws SQLException {
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            if (binder != null) binder.bind(ps);
-            try (ResultSet rs = ps.executeQuery()) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            if (binder != null) binder.bind(preparedStatement);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 List<T> out = new ArrayList<>();
-                while (rs.next()) out.add(mapper.map(rs));
+                while (resultSet.next()) out.add(mapper.map(resultSet));
                 return out;
             }
         }
@@ -36,19 +36,20 @@ public abstract class AbstractDao {
     }
 
     protected int update(String sql, Binder binder) throws SQLException {
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            if (binder != null) binder.bind(ps);
-            return ps.executeUpdate();
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            if (binder != null) binder.bind(preparedStatement);
+            return preparedStatement.executeUpdate();
         }
     }
 
     protected int updateReturningId(String sql, Binder binder) throws SQLException {
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            if (binder != null) binder.bind(ps);
-            int rows = ps.executeUpdate();
-            if (rows > 0) try (ResultSet k = ps.getGeneratedKeys()) { return k.next() ? k.getInt(1) : 0; }
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            if (binder != null) binder.bind(preparedStatement);
+            int rows = preparedStatement.executeUpdate();
+            if (rows > 0) try (ResultSet resultSet = preparedStatement.getGeneratedKeys()) {
+                return resultSet.next() ? resultSet.getInt(1) : 0; }
             return 0;
         }
     }
