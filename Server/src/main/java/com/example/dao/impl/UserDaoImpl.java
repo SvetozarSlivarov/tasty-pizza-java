@@ -16,7 +16,7 @@ public class UserDaoImpl extends AbstractDao implements UserDao {
     public User findById(int id) {
         String sql = "SELECT * FROM users WHERE id = ?";
         try {
-            return queryOne(sql, ps -> ps.setInt(1, id), this::map);
+            return queryOne(sql, preparedStatement -> preparedStatement.setInt(1, id), this::map);
         } catch (SQLException e) { e.printStackTrace(); return null; }
     }
 
@@ -24,7 +24,7 @@ public class UserDaoImpl extends AbstractDao implements UserDao {
     public User findByUsername(String username) {
         String sql = "SELECT * FROM users WHERE username = ?";
         try {
-            return queryOne(sql, ps -> ps.setString(1, username), this::map);
+            return queryOne(sql, preparedStatement -> preparedStatement.setString(1, username), this::map);
         } catch (SQLException e) { e.printStackTrace(); return null; }
     }
 
@@ -32,7 +32,9 @@ public class UserDaoImpl extends AbstractDao implements UserDao {
     public User findByUsernameAndPassword(String username, String password) {
         String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
         try {
-            return queryOne(sql, ps -> { ps.setString(1, username); ps.setString(2, password); }, this::map);
+            return queryOne(sql, preparedStatement -> {
+                preparedStatement.setString(1, username);
+                preparedStatement.setString(2, password); }, this::map);
         } catch (SQLException e) { e.printStackTrace(); return null; }
     }
 
@@ -48,11 +50,11 @@ public class UserDaoImpl extends AbstractDao implements UserDao {
     public boolean save(User user) {
         String sql = "INSERT INTO users(fullname, username, password, role) VALUES(?,?,?,?)";
         try {
-            int id = updateReturningId(sql, ps -> {
-                ps.setString(1, user.getFullname());
-                ps.setString(2, user.getUsername());
-                ps.setString(3, user.getPassword());
-                ps.setString(4, user.getRole().name());
+            int id = updateReturningId(sql, preparedStatement -> {
+                preparedStatement.setString(1, user.getFullname());
+                preparedStatement.setString(2, user.getUsername());
+                preparedStatement.setString(3, user.getPassword());
+                preparedStatement.setString(4, user.getRole().name());
             });
             if (id > 0) user.setId(id);
             return id > 0;
@@ -63,12 +65,12 @@ public class UserDaoImpl extends AbstractDao implements UserDao {
     public boolean update(User user) {
         String sql = "UPDATE users SET fullname=?, username=?, password=?, role=? WHERE id=?";
         try {
-            int rows = update(sql, ps -> {
-                ps.setString(1, user.getFullname());
-                ps.setString(2, user.getUsername());
-                ps.setString(3, user.getPassword());
-                ps.setString(4, user.getRole().name());
-                ps.setInt(5, user.getId());
+            int rows = update(sql, preparedStatement -> {
+                preparedStatement.setString(1, user.getFullname());
+                preparedStatement.setString(2, user.getUsername());
+                preparedStatement.setString(3, user.getPassword());
+                preparedStatement.setString(4, user.getRole().name());
+                preparedStatement.setInt(5, user.getId());
             });
             return rows > 0;
         } catch (SQLException e) { e.printStackTrace(); return false; }
@@ -78,18 +80,18 @@ public class UserDaoImpl extends AbstractDao implements UserDao {
     public boolean delete(int id) {
         String sql = "DELETE FROM users WHERE id = ?";
         try {
-            return update(sql, ps -> ps.setInt(1, id)) > 0;
+            return update(sql, preparedStatement -> preparedStatement.setInt(1, id)) > 0;
         } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
-    private User map(ResultSet rs) throws SQLException {
-        User u = new User();
-        u.setId(rs.getInt("id"));
-        u.setFullname(rs.getString("fullname"));
-        u.setUsername(rs.getString("username"));
-        u.setPassword(rs.getString("password"));
-        u.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
-        u.setCreatedAt(rs.getTimestamp("createdAt"));
-        return u;
+    private User map(ResultSet resultSet) throws SQLException {
+        User user = new User();
+        user.setId(resultSet.getInt("id"));
+        user.setFullname(resultSet.getString("fullname"));
+        user.setUsername(resultSet.getString("username"));
+        user.setPassword(resultSet.getString("password"));
+        user.setRole(UserRole.valueOf(resultSet.getString("role").toUpperCase()));
+        user.setCreatedAt(resultSet.getTimestamp("createdAt"));
+        return user;
     }
 }

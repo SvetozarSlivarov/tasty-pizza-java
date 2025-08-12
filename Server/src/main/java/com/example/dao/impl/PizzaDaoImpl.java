@@ -21,8 +21,12 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
     @Override
     public List<Pizza> findAll() {
         String sql = "SELECT * FROM pizzas ORDER BY id";
-        try { return queryList(sql, null, this::map); }
-        catch (SQLException e) { e.printStackTrace(); return new ArrayList<>(); }
+        try {
+            return queryList(sql, null, this::map);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
     @Override
     public List<Pizza> findAvailable() {
@@ -36,30 +40,30 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
     }
 
     @Override
-    public boolean save(Pizza p) {
+    public boolean save(Pizza pizza) {
         String sql = "INSERT INTO pizzas(name, description, base_price, is_available) VALUES(?,?,?,?)";
         try {
-            int id = updateReturningId(sql, ps -> {
-                ps.setString(1, p.getName());
-                ps.setString(2, p.getDescription());
-                ps.setBigDecimal(3, p.getPrice());
-                ps.setBoolean(4, p.isAvailable());
+            int id = updateReturningId(sql, preparedStatement -> {
+                preparedStatement.setString(1, pizza.getName());
+                preparedStatement.setString(2, pizza.getDescription());
+                preparedStatement.setBigDecimal(3, pizza.getPrice());
+                preparedStatement.setBoolean(4, pizza.isAvailable());
             });
-            if (id > 0) p.setId(id);
+            if (id > 0) pizza.setId(id);
             return id > 0;
         } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
     @Override
-    public boolean update(Pizza p) {
+    public boolean update(Pizza pizza) {
         String sql = "UPDATE pizzas SET name=?, description=?, base_price=?, is_available=? WHERE id=?";
         try {
-            int rows = update(sql, ps -> {
-                ps.setString(1, p.getName());
-                ps.setString(2, p.getDescription());
-                ps.setBigDecimal(3, p.getPrice());
-                ps.setBoolean(4, p.isAvailable());
-                ps.setInt(5, p.getId());
+            int rows = update(sql, preparedStatement -> {
+                preparedStatement.setString(1, pizza.getName());
+                preparedStatement.setString(2, pizza.getDescription());
+                preparedStatement.setBigDecimal(3, pizza.getPrice());
+                preparedStatement.setBoolean(4, pizza.isAvailable());
+                preparedStatement.setInt(5, pizza.getId());
             });
             return rows > 0;
         } catch (SQLException e) { e.printStackTrace(); return false; }
@@ -67,18 +71,19 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
 
     @Override
     public boolean delete(int id) {
-        try { return update("DELETE FROM pizzas WHERE id=?", ps -> ps.setInt(1, id)) > 0; }
+        try {
+            String sql = "DELETE FROM pizzas WHERE id=?";
+            return update(sql, preparedStatement -> preparedStatement.setInt(1, id)) > 0; }
         catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
-    private Pizza map(ResultSet rs) throws SQLException {
-        Pizza p = new Pizza();
-        p.setId(rs.getInt("id"));
-        p.setName(rs.getString("name"));
-        p.setDescription(rs.getString("description"));
-        p.setPrice(rs.getBigDecimal("base_price"));
-        p.setAvailable(rs.getBoolean("is_available"));
-        p.setCreatedAt(rs.getTimestamp("created_at"));
-        return p;
+    private Pizza map(ResultSet resultSet) throws SQLException {
+        Pizza pizza = new Pizza();
+        pizza.setId(resultSet.getInt("id"));
+        pizza.setName(resultSet.getString("name"));
+        pizza.setDescription(resultSet.getString("description"));
+        pizza.setPrice(resultSet.getBigDecimal("base_price"));
+        pizza.setAvailable(resultSet.getBoolean("is_available"));
+        return pizza;
     }
 }

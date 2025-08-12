@@ -14,7 +14,7 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
     public Drink findById(int id) {
         String sql = "SELECT * FROM drinks WHERE id=?";
         try {
-            return queryOne(sql, ps -> ps.setInt(1, id), this::map);
+            return queryOne(sql, preparedStatement -> preparedStatement.setInt(1, id), this::map);
         } catch (SQLException e)
         { e.printStackTrace();
             return null;
@@ -46,11 +46,11 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
     public boolean save(Drink drink) {
         String sql = "INSERT INTO drinks(name, description, price, is_available) VALUES(?,?,?,?)";
         try {
-            int id = updateReturningId(sql, ps -> {
-                ps.setString(1, drink.getName());
-                ps.setString(2, drink.getDescription());
-                ps.setBigDecimal(3, drink.getPrice());
-                ps.setBoolean(4, drink.isAvailable());
+            int id = updateReturningId(sql, preparedStatement -> {
+                preparedStatement.setString(1, drink.getName());
+                preparedStatement.setString(2, drink.getDescription());
+                preparedStatement.setBigDecimal(3, drink.getPrice());
+                preparedStatement.setBoolean(4, drink.isAvailable());
             });
             if (id > 0) drink.setId(id);
             return id > 0;
@@ -64,12 +64,12 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
     public boolean update(Drink drink) {
         String sql = "UPDATE drinks SET name=?, description=?, price=?, is_available=? WHERE id=?";
         try {
-            int rows = update(sql, ps -> {
-                ps.setString(1, drink.getName());
-                ps.setString(2, drink.getDescription());
-                ps.setBigDecimal(3, drink.getPrice());
-                ps.setBoolean(4, drink.isAvailable());
-                ps.setInt(5, drink.getId());
+            int rows = update(sql, preparedStatement -> {
+                preparedStatement.setString(1, drink.getName());
+                preparedStatement.setString(2, drink.getDescription());
+                preparedStatement.setBigDecimal(3, drink.getPrice());
+                preparedStatement.setBoolean(4, drink.isAvailable());
+                preparedStatement.setInt(5, drink.getId());
             });
             return rows > 0;
         } catch (SQLException e) {
@@ -81,20 +81,21 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
     @Override
     public boolean delete(int id) {
         try {
-            return update("DELETE FROM drinks WHERE id=?", ps -> ps.setInt(1, id)) > 0; }
+            String sql = "DELETE FROM drinks WHERE id=?";
+            return update(sql, preparedStatement -> preparedStatement.setInt(1, id)) > 0; }
         catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    private Drink map(ResultSet rs) throws SQLException {
+    private Drink map(ResultSet resultSet) throws SQLException {
         Drink drink = new Drink();
-        drink.setId(rs.getInt("id"));
-        drink.setName(rs.getString("name"));
-        drink.setDescription(rs.getString("description"));
-        drink.setPrice(rs.getBigDecimal("price"));
-        drink.setAvailable(rs.getBoolean("is_available"));
+        drink.setId(resultSet.getInt("id"));
+        drink.setName(resultSet.getString("name"));
+        drink.setDescription(resultSet.getString("description"));
+        drink.setPrice(resultSet.getBigDecimal("price"));
+        drink.setAvailable(resultSet.getBoolean("is_available"));
         return drink;
     }
 }

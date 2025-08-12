@@ -18,7 +18,7 @@ public class OrderItemCustomizationDaoImpl extends AbstractDao implements OrderI
     public List<OrderCustomization> findByOrderItemId(int orderItemId) {
         String sql = "SELECT id, order_item_id, ingredient_id, action FROM order_item_customizations WHERE order_item_id=?";
         try {
-            return queryList(sql, ps -> ps.setInt(1, orderItemId), this::map);
+            return queryList(sql, preparedStatement -> preparedStatement.setInt(1, orderItemId), this::map);
         } catch (SQLException e) {
             e.printStackTrace();
             return new ArrayList<>();
@@ -29,7 +29,7 @@ public class OrderItemCustomizationDaoImpl extends AbstractDao implements OrderI
     public OrderCustomization findById(int id) {
         String sql = "SELECT id, order_item_id, ingredient_id, action FROM order_item_customizations WHERE id=?";
         try {
-            return queryOne(sql, ps -> ps.setInt(1, id), this::map);
+            return queryOne(sql, preparedStatement -> preparedStatement.setInt(1, id), this::map);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
@@ -40,10 +40,10 @@ public class OrderItemCustomizationDaoImpl extends AbstractDao implements OrderI
     public boolean add(OrderCustomization customization) {
         String sql = "INSERT INTO order_item_customizations(order_item_id, ingredient_id, action) VALUES(?,?,?)";
         try {
-            int newId = updateReturningId(sql, ps -> {
-                ps.setInt(1, customization.getOrderItem().getId());
-                ps.setInt(2, customization.getIngredient().getId());
-                ps.setString(3, customization.getAction().name()); // ADD / REMOVE
+            int newId = updateReturningId(sql, preparedStatement -> {
+                preparedStatement.setInt(1, customization.getOrderItem().getId());
+                preparedStatement.setInt(2, customization.getIngredient().getId());
+                preparedStatement.setString(3, customization.getAction().name());
             });
             if (newId > 0) customization.setId(newId);
             return newId > 0;
@@ -57,7 +57,7 @@ public class OrderItemCustomizationDaoImpl extends AbstractDao implements OrderI
     public boolean remove(int id) {
         String sql = "DELETE FROM order_item_customizations WHERE id=?";
         try {
-            return update(sql, ps -> ps.setInt(1, id)) > 0;
+            return update(sql, preparedStatement -> preparedStatement.setInt(1, id)) > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -68,9 +68,9 @@ public class OrderItemCustomizationDaoImpl extends AbstractDao implements OrderI
     public boolean removeByItemAndIngredient(int orderItemId, int ingredientId) {
         String sql = "DELETE FROM order_item_customizations WHERE order_item_id=? AND ingredient_id=?";
         try {
-            return update(sql, ps -> {
-                ps.setInt(1, orderItemId);
-                ps.setInt(2, ingredientId);
+            return update(sql, preparedStatement -> {
+                preparedStatement.setInt(1, orderItemId);
+                preparedStatement.setInt(2, ingredientId);
             }) > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -79,18 +79,18 @@ public class OrderItemCustomizationDaoImpl extends AbstractDao implements OrderI
     }
 
     // --- mapper ---
-    private OrderCustomization map(ResultSet rs) throws SQLException {
-        OrderItem oi = new OrderItem();
-        oi.setId(rs.getInt("order_item_id"));
+    private OrderCustomization map(ResultSet resultSet) throws SQLException {
+        OrderItem orderItem = new OrderItem();
+        orderItem.setId(resultSet.getInt("order_item_id"));
 
         Ingredient ing = new Ingredient();
-        ing.setId(rs.getInt("ingredient_id"));
+        ing.setId(resultSet.getInt("ingredient_id"));
 
-        OrderCustomization oc = new OrderCustomization();
-        oc.setId(rs.getInt("id"));
-        oc.setOrderItem(oi);
-        oc.setIngredient(ing);
-        oc.setAction(CustomizationAction.valueOf(rs.getString("action").toUpperCase()));
-        return oc;
+        OrderCustomization orderCustomization = new OrderCustomization();
+        orderCustomization.setId(resultSet.getInt("id"));
+        orderCustomization.setOrderItem(orderItem);
+        orderCustomization.setIngredient(ing);
+        orderCustomization.setAction(CustomizationAction.valueOf(resultSet.getString("action").toUpperCase()));
+        return orderCustomization;
     }
 }
