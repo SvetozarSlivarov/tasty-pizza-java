@@ -1,136 +1,84 @@
 package com.example.dao.impl;
 
 import com.example.dao.PizzaDao;
-import com.example.db.DBConnection;
+import com.example.dao.base.AbstractDao;
 import com.example.model.Pizza;
 
-import java.math.BigDecimal;
-import java.sql.*;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PizzaDaoImpl implements PizzaDao {
-
+public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
     @Override
     public Pizza findById(int id) {
         String sql = "SELECT * FROM pizzas WHERE id = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return extractPizza(rs);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
+        try { return queryOne(sql, ps -> ps.setInt(1, id), this::map); }
+        catch (SQLException e) { e.printStackTrace(); return null; }
     }
 
     @Override
     public List<Pizza> findAll() {
-        List<Pizza> pizzas = new ArrayList<>();
-        String sql = "SELECT * FROM pizzas";
-
-        try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                pizzas.add(extractPizza(rs));
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return pizzas;
+        String sql = "SELECT * FROM pizzas ORDER BY id";
+        try { return queryList(sql, null, this::map); }
+        catch (SQLException e) { e.printStackTrace(); return new ArrayList<>(); }
     }
     @Override
-    public List<Pizza> findAvailable(){
-        List<Pizza> pizzas = new ArrayList<>();
+    public List<Pizza> findAvailable() {
         String sql = "SELECT * FROM pizzas WHERE is_available = true";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery())   {
-
-            while (rs.next()){
-                pizzas.add(extractPizza(rs));
-            }
-
-        } catch (SQLException e){
+        try {
+            return queryList(sql, null, this::map);
+        } catch (SQLException e) {
             e.printStackTrace();
+            return new ArrayList<>();
         }
-
-        return pizzas;
     }
 
     @Override
-    public boolean save(Pizza pizza) {
-        String sql = "INSERT INTO pizzas (name, description, price, is_available) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, pizza.getName());
-            ps.setString(2, pizza.getDescription());
-            ps.setBigDecimal(3, pizza.getPrice());
-            ps.setBoolean(4, pizza.isAvailable());
-
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return false;
+    public boolean save(Pizza p) {
+        String sql = "INSERT INTO pizzas(name, description, base_price, is_available) VALUES(?,?,?,?)";
+        try {
+            int id = updateReturningId(sql, ps -> {
+                ps.setString(1, p.getName());
+                ps.setString(2, p.getDescription());
+                ps.setBigDecimal(3, p.getPrice());
+                ps.setBoolean(4, p.isAvailable());
+            });
+            if (id > 0) p.setId(id);
+            return id > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
     @Override
-    public boolean update(Pizza pizza) {
-        String sql = "UPDATE pizzas SET name = ?, description = ?, price = ?, is_available = ? WHERE id = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, pizza.getName());
-            ps.setString(2, pizza.getDescription());
-            ps.setBigDecimal(3, pizza.getPrice());
-            ps.setBoolean(4, pizza.isAvailable());
-            ps.setInt(5, pizza.getId());
-
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return false;
+    public boolean update(Pizza p) {
+        String sql = "UPDATE pizzas SET name=?, description=?, base_price=?, is_available=? WHERE id=?";
+        try {
+            int rows = update(sql, ps -> {
+                ps.setString(1, p.getName());
+                ps.setString(2, p.getDescription());
+                ps.setBigDecimal(3, p.getPrice());
+                ps.setBoolean(4, p.isAvailable());
+                ps.setInt(5, p.getId());
+            });
+            return rows > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
     @Override
     public boolean delete(int id) {
-        String sql = "DELETE FROM pizzas WHERE id = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return false;
+        try { return update("DELETE FROM pizzas WHERE id=?", ps -> ps.setInt(1, id)) > 0; }
+        catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
-    private Pizza extractPizza(ResultSet rs) throws SQLException {
-        return new Pizza(
-                rs.getInt("id"),
-                rs.getString("name"),
-                rs.getString("description"),
-                rs.getBigDecimal("price"),
-                rs.getBoolean("is_available")
-        );
+    private Pizza map(ResultSet rs) throws SQLException {
+        Pizza p = new Pizza();
+        p.setId(rs.getInt("id"));
+        p.setName(rs.getString("name"));
+        p.setDescription(rs.getString("description"));
+        p.setPrice(rs.getBigDecimal("base_price"));
+        p.setAvailable(rs.getBoolean("is_available"));
+        p.setCreatedAt(rs.getTimestamp("created_at"));
+        return p;
     }
 }

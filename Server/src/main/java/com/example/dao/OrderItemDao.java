@@ -7,5 +7,6 @@ public interface OrderItemDao {
     OrderItem findById(int id);
     List<OrderItem> findByOrderId(int orderId);
     boolean save(OrderItem item);
+    boolean updateQuantity(int id, int qty);
     boolean delete(int id);
 }

@@ -1,91 +1,71 @@
 package com.example.dao.impl;
 
 import com.example.dao.OrderDao;
-import com.example.db.DBConnection;
+import com.example.dao.base.AbstractDao;
 import com.example.model.Order;
-import com.example.model.User;
 import com.example.model.enums.OrderStatus;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrderDaoImpl implements OrderDao {
+public class OrderDaoImpl extends AbstractDao implements OrderDao {
 
     @Override
     public void save(Order order) {
-        String sql = "INSERT INTO orders (user_id, status) VALUES (?, ?)";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            ps.setInt(1, order.getUser().getId());
-            ps.setString(2, order.getStatus().name());
-
-            ps.executeUpdate();
-
-            ResultSet rs = ps.getGeneratedKeys();
-            if (rs.next()) {
-                order.setId(rs.getInt(1));
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        String sql = "INSERT INTO orders(user_id, status) VALUES(?, ?)";
+        try {
+            int id = updateReturningId(sql, ps -> {
+                ps.setInt(1, order.getUserId());
+                ps.setString(2, order.getStatus().name());
+            });
+            order.setId(id);
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     @Override
     public Order findById(int id) {
-        String sql = "SELECT * FROM orders WHERE id = ?";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return extractOrder(rs);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return null;
+        String sql = "SELECT id, user_id, created_at, status FROM orders WHERE id = ?";
+        try {
+            return queryOne(sql, ps -> ps.setInt(1, id), this::map);
+        } catch (SQLException e) { e.printStackTrace(); return null; }
     }
 
     @Override
     public List<Order> findByUserId(int userId) {
-        List<Order> orders = new ArrayList<>();
-        String sql = "SELECT * FROM orders WHERE user_id = ?";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                orders.add(extractOrder(rs));
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return orders;
+        String sql = "SELECT id, user_id, created_at, status FROM orders WHERE user_id = ? ORDER BY id";
+        try {
+            return queryList(sql, ps -> ps.setInt(1, userId), this::map);
+        } catch (SQLException e) { e.printStackTrace(); return new ArrayList<>(); }
     }
 
-    private Order extractOrder(ResultSet rs) throws SQLException {
-        User user = new User();
-        user.setId(rs.getInt("user_id"));
+    @Override
+    public boolean updateStatus(int id, String status) {
+        String sql = "UPDATE orders SET status = ? WHERE id = ?";
+        try {
+            return update(sql, ps -> {
+                ps.setString(1, status);
+                ps.setInt(2, id);
+            }) > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
+    }
 
-        return new Order(
-                rs.getInt("id"),
-                user,
-                rs.getTimestamp("created_at"),
-                OrderStatus.valueOf(rs.getString("status"))
-        );
+    @Override
+    public boolean delete(int id) {
+        String sql = "DELETE FROM orders WHERE id = ?";
+        try {
+            return update(sql, ps -> ps.setInt(1, id)) > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
+    }
+
+    // mapper
+    private Order map(ResultSet rs) throws SQLException {
+        Order o = new Order();
+        o.setId(rs.getInt("id"));
+        o.setUserId(rs.getInt("user_id"));
+        o.setCreatedAt(rs.getTimestamp("created_at"));
+        o.setStatus(OrderStatus.valueOf(rs.getString("status").toUpperCase()));
+        return o;
     }
 }
