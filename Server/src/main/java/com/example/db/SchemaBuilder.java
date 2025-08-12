@@ -86,8 +86,7 @@ public class SchemaBuilder {
         String sql = """
             CREATE TABLE IF NOT EXISTS ingredient_types (
                 id INT PRIMARY KEY AUTO_INCREMENT,
-                name VARCHAR(50) NOT NULL,
-                display_name VARCHAR(100)
+                name VARCHAR(50) NOT NULL
             )
         """;
         stmt.executeUpdate(sql);
