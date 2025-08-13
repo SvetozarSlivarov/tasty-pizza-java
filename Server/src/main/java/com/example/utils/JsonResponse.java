@@ -1,35 +1,26 @@
 package com.example.utils;
 
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class JsonResponse {
-
-    public static JsonObject success(String message) {
-        JsonObject res = new JsonObject();
-        res.addProperty("status", "success");
-        res.addProperty("message", message);
-        return res;
+    public static JsonNode success(String message) {
+        ObjectNode json = JsonUtil.mapper.createObjectNode();
+        json.put("status", "success");
+        json.put("message", message);
+        return json;
     }
 
-    public static JsonObject error(String message) {
-        JsonObject res = new JsonObject();
-        res.addProperty("status", "error");
-        res.addProperty("message", message);
-        return res;
+    public static JsonNode success(String message, JsonNode data) {
+        ObjectNode json = (ObjectNode) success(message);
+        json.set("data", data);
+        return json;
     }
 
-    public static JsonObject unauthorized() {
-        JsonObject res = new JsonObject();
-        res.addProperty("status", "unauthorized");
-        res.addProperty("message", "Unauthorized access");
-        return res;
+    public static JsonNode error(String message) {
+        ObjectNode json = JsonUtil.mapper.createObjectNode();
+        json.put("status", "error");
+        json.put("message", message);
+        return json;
     }
-
-    public static JsonObject notFound() {
-        JsonObject res = new JsonObject();
-        res.addProperty("status", "notFound");
-        res.addProperty("message", "The page not found");
-        return res;
-    }
-
 }

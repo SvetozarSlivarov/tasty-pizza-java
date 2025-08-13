@@ -4,8 +4,8 @@ import com.example.model.User;
 import com.example.network.SessionManager;
 import com.example.service.UserService;
 import com.example.utils.JsonResponse;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.example.utils.JsonUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -13,9 +13,8 @@ import java.util.UUID;
 public class AuthController {
 
     private final UserService userService = new UserService();
-    private final Gson gson = new Gson();
 
-    public JsonObject handle(String action, JsonObject payload) {
+    public JsonNode handle(String action, JsonNode payload) {
         return switch (action) {
             case "auth:login" -> login(payload);
             case "auth:register" -> register(payload);
@@ -23,13 +22,13 @@ public class AuthController {
         };
     }
 
-    private JsonObject login(JsonObject payload) {
+    private JsonNode login(JsonNode payload) {
         if (!payload.has("username") || !payload.has("password")) {
             return JsonResponse.error("Missing username or password");
         }
 
-        String username = payload.get("username").getAsString();
-        String password = payload.get("password").getAsString();
+        String username = payload.get("username").asText();
+        String password = payload.get("password").asText();
 
         Optional<User> optionalUser = userService.login(username, password);
 
@@ -43,34 +42,29 @@ public class AuthController {
         String token = UUID.randomUUID().toString();
         SessionManager.store(token, user);
 
-        JsonObject response = new JsonObject();
-        response.addProperty("status", "success");
-        response.addProperty("message", "Login successful");
-        response.addProperty("authToken", token);
-        response.add("data", gson.toJsonTree(user));
-
-        return response;
+        return JsonUtil.mapper.createObjectNode()
+                .put("status", "success")
+                .put("message", "Login successful")
+                .put("authToken", token)
+                .set("data", JsonUtil.mapper.valueToTree(user));
     }
 
-    private JsonObject register(JsonObject payload) {
+    private JsonNode register(JsonNode payload) {
         if (!payload.has("fullname") || !payload.has("username") || !payload.has("password")) {
             return JsonResponse.error("Missing fields");
         }
 
-        String fullname = payload.get("fullname").getAsString();
-        String username = payload.get("username").getAsString();
-        String password = payload.get("password").getAsString();
+        String fullname = payload.get("fullname").asText();
+        String username = payload.get("username").asText();
+        String password = payload.get("password").asText();
 
         if (userService.existsByUsername(username)) {
             return JsonResponse.error("Username already exists");
         }
 
         boolean success = userService.register(fullname, username, password);
-
-        if (!success) {
-            return JsonResponse.error("Registration failed");
-        }
-
-        return JsonResponse.success("Registration successful");
+        return success
+                ? JsonResponse.success("Registration successful")
+                : JsonResponse.error("Registration failed");
     }
 }

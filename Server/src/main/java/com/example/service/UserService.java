@@ -4,7 +4,6 @@ import com.example.dao.UserDao;
 import com.example.dao.impl.UserDaoImpl;
 import com.example.model.User;
 import com.example.model.enums.UserRole;
-import com.google.gson.Gson;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,11 +25,6 @@ public class UserService {
 
     public List<User> getAllUsers() {
         return userDao.findAll();
-    }
-
-    public boolean registerUser(User user) {
-        // TODO: Add validation (User exist? and more)
-        return userDao.save(user);
     }
 
     public boolean updateUser(User user) {

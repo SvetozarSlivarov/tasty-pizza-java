@@ -1,37 +1,22 @@
 package com.example.model;
 
 public class PizzaIngredient {
-    private Pizza pizza;
-    private Ingredient ingredient;
+    private int pizzaId;
+    private int ingredientId;
 
     public PizzaIngredient() {}
-
-    public PizzaIngredient(Pizza pizza, Ingredient ingredient) {
-        this.pizza = pizza;
-        this.ingredient = ingredient;
+    public PizzaIngredient(int pizzaId, int ingredientId) {
+        this.pizzaId = pizzaId;
+        this.ingredientId = ingredientId;
     }
 
-    public Pizza getPizza() {
-        return pizza;
-    }
+    public int getPizzaId() { return pizzaId; }
+    public void setPizzaId(int pizzaId) { this.pizzaId = pizzaId; }
 
-    public void setPizza(Pizza pizza) {
-        this.pizza = pizza;
-    }
+    public int getIngredientId() { return ingredientId; }
+    public void setIngredientId(int ingredientId) { this.ingredientId = ingredientId; }
 
-    public Ingredient getIngredient() {
-        return ingredient;
-    }
-
-    public void setIngredient(Ingredient ingredient) {
-        this.ingredient = ingredient;
-    }
-
-    @Override
-    public String toString() {
-        return "PizzaIngredient{" +
-                "pizza=" + (pizza != null ? pizza.getName() : "null") +
-                ", ingredient=" + (ingredient != null ? ingredient.getName() : "null") +
-                '}';
+    @Override public String toString() {
+        return "PizzaIngredient{pizzaId=" + pizzaId + ", ingredientId=" + ingredientId + "}";
     }
 }

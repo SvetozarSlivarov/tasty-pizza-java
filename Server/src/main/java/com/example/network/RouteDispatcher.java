@@ -1,20 +1,25 @@
 package com.example.network;
 
 import com.example.controller.AuthController;
-import com.google.gson.JsonObject;
+import com.example.controller.MenuController;
+// com.example.controller.OrderController;
+import com.example.utils.JsonResponse;
+import com.example.utils.JsonUtil;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class RouteDispatcher {
 
-    public static JsonObject dispatch(String action, JsonObject payload) {
+    public static JsonNode dispatch(String action, JsonNode payload) {
         if (action.startsWith("auth:")) {
             return new AuthController().handle(action, payload);
         }
-//        } else if (action.startsWith("pizza:")) {
-//            return new PizzaController().handle(action, payload);
+        else if (action.startsWith("menu:")) {
+            return new MenuController().handle(action, payload);
+        }
+//        else if (action.startsWith("order:")) {
+//            return new OrderController().handle(action, payload);
 //        }
-        JsonObject error = new JsonObject();
-        error.addProperty("status", "error");
-        error.addProperty("message", "Unknown action");
-        return error;
+
+        return JsonResponse.error("Unknown action: " + action);
     }
 }

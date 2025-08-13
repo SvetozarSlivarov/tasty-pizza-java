@@ -2,64 +2,42 @@ package com.example.dao.impl;
 
 import com.example.dao.PizzaIngredientDao;
 import com.example.dao.base.AbstractDao;
-import com.example.model.PizzaIngredient;
 
-import java.sql.*;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PizzaIngredientDaoImpl extends AbstractDao implements PizzaIngredientDao {
+
     @Override
-    public List<PizzaIngredient> findByPizzaId(int pizzaId) {
-        String sql = "SELECT pizza_id, ingredient_id FROM pizza_ingredients WHERE pizza_id=?";
+    public List<Integer> findIngredientIdsByPizzaId(int pizzaId) {
+        String sql = "SELECT ingredient_id FROM pizza_ingredients WHERE pizza_id = ?";
         try {
-            return queryList(sql, preparedStatement -> preparedStatement.setInt(1, pizzaId), this::map); }
-        catch (SQLException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
+            return queryList(sql, ps -> ps.setInt(1, pizzaId), rs -> rs.getInt("ingredient_id"));
+        } catch (SQLException e) { e.printStackTrace(); return new ArrayList<>(); }
     }
 
     @Override
-    public List<PizzaIngredient> findByIngredientId(int ingredientId) {
-        String sql = "SELECT pizza_id, ingredient_id FROM pizza_ingredients WHERE ingredient_id=?";
+    public List<Integer> findPizzaIdsByIngredientId(int ingredientId) {
+        String sql = "SELECT pizza_id FROM pizza_ingredients WHERE ingredient_id = ?";
         try {
-            return queryList(sql, preparedStatement -> preparedStatement.setInt(1, ingredientId), this::map); }
-        catch (SQLException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
+            return queryList(sql, ps -> ps.setInt(1, ingredientId), rs -> rs.getInt("pizza_id"));
+        } catch (SQLException e) { e.printStackTrace(); return new ArrayList<>(); }
     }
 
     @Override
     public boolean add(int pizzaId, int ingredientId) {
-        String sql = "INSERT INTO pizza_ingredients(pizza_id, ingredient_id) VALUES(?,?)";
+        String sql = "INSERT INTO pizza_ingredients(pizza_id, ingredient_id) VALUES(?, ?)";
         try {
-            return update(sql, preparedStatement -> {
-                preparedStatement.setInt(1, pizzaId);
-                preparedStatement.setInt(2, ingredientId); }) > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+            return update(sql, ps -> { ps.setInt(1, pizzaId); ps.setInt(2, ingredientId); }) > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 
     @Override
     public boolean remove(int pizzaId, int ingredientId) {
         String sql = "DELETE FROM pizza_ingredients WHERE pizza_id=? AND ingredient_id=?";
         try {
-            return update(sql, preparedStatement -> {
-                preparedStatement.setInt(1, pizzaId);
-                preparedStatement.setInt(2, ingredientId); }) > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    private PizzaIngredient map(ResultSet resultSet) throws SQLException {
-        var pizza = new com.example.model.Pizza(); pizza.setId(resultSet.getInt("pizza_id"));
-        var ingredient = new com.example.model.Ingredient(); ingredient.setId(resultSet.getInt("ingredient_id"));
-        return new com.example.model.PizzaIngredient(pizza, ingredient);
+            return update(sql, ps -> { ps.setInt(1, pizzaId); ps.setInt(2, ingredientId); }) > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
     }
 }
