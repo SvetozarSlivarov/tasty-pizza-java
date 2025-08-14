@@ -1,70 +1,41 @@
+// src/com/example/controller/AuthController.java
 package com.example.controller;
 
-import com.example.model.User;
-import com.example.network.SessionManager;
+import com.example.dto.AuthResponse;
+import com.example.dto.LoginRequest;
+import com.example.dto.RegisterRequest;
+import com.example.http.HttpUtils;
+import com.example.security.TokenService;
 import com.example.service.UserService;
-import com.example.utils.JsonResponse;
 import com.example.utils.JsonUtil;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.sun.net.httpserver.HttpExchange;
 
+import java.io.IOException;
 import java.util.Optional;
-import java.util.UUID;
 
 public class AuthController {
+    private final UserService users;
+    private final TokenService tokens;
 
-    private final UserService userService = new UserService();
+    public AuthController(UserService users, TokenService tokens){ this.users=users; this.tokens=tokens; }
 
-    public JsonNode handle(String action, JsonNode payload) {
-        return switch (action) {
-            case "auth:login" -> login(payload);
-            case "auth:register" -> register(payload);
-            default -> JsonResponse.error("Unknown auth action");
-        };
+    public void handleLogin(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) { HttpUtils.methodNotAllowed(ex, "POST"); return; }
+        var req = JsonUtil.fromJson(HttpUtils.readBody(ex), LoginRequest.class);
+        if (req.username == null || req.password == null) { HttpUtils.sendJson(ex, 400, java.util.Map.of("error","bad_request")); return; }
+        Optional<com.example.model.User> u = users.login(req.username, req.password);
+        if (u.isEmpty()) { HttpUtils.sendJson(ex, 401, java.util.Map.of("error","invalid_credentials")); return; }
+        String token = tokens.issueToken(req.username);
+        HttpUtils.sendJson(ex, 200, new AuthResponse(req.username, token));
     }
 
-    private JsonNode login(JsonNode payload) {
-        if (!payload.has("username") || !payload.has("password")) {
-            return JsonResponse.error("Missing username or password");
-        }
-
-        String username = payload.get("username").asText();
-        String password = payload.get("password").asText();
-
-        Optional<User> optionalUser = userService.login(username, password);
-
-        if (optionalUser.isEmpty()) {
-            return JsonResponse.error("Invalid credentials");
-        }
-
-        User user = optionalUser.get();
-        user.setPassword(null);
-
-        String token = UUID.randomUUID().toString();
-        SessionManager.store(token, user);
-
-        return JsonUtil.mapper.createObjectNode()
-                .put("status", "success")
-                .put("message", "Login successful")
-                .put("authToken", token)
-                .set("data", JsonUtil.mapper.valueToTree(user));
-    }
-
-    private JsonNode register(JsonNode payload) {
-        if (!payload.has("fullname") || !payload.has("username") || !payload.has("password")) {
-            return JsonResponse.error("Missing fields");
-        }
-
-        String fullname = payload.get("fullname").asText();
-        String username = payload.get("username").asText();
-        String password = payload.get("password").asText();
-
-        if (userService.existsByUsername(username)) {
-            return JsonResponse.error("Username already exists");
-        }
-
-        boolean success = userService.register(fullname, username, password);
-        return success
-                ? JsonResponse.success("Registration successful")
-                : JsonResponse.error("Registration failed");
+    public void handleRegister(HttpExchange ex) throws IOException {
+        if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) { HttpUtils.methodNotAllowed(ex, "POST"); return; }
+        var req = JsonUtil.fromJson(HttpUtils.readBody(ex), RegisterRequest.class);
+        if (req.fullname == null || req.username == null || req.password == null) { HttpUtils.sendJson(ex, 400, java.util.Map.of("error","bad_request")); return; }
+        boolean ok = users.register(req.fullname, req.username, req.password);
+        if (!ok) { HttpUtils.sendJson(ex, 409, java.util.Map.of("error","username_exists")); return; }
+        String token = tokens.issueToken(req.username);
+        HttpUtils.sendJson(ex, 201, new AuthResponse(req.username, token));
     }
 }
