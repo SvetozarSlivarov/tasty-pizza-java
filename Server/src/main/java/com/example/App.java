@@ -7,6 +7,8 @@ import com.example.http.AccessLogFilter;
 import com.example.http.CorsFilter;
 import com.example.http.HttpUtils;
 import com.example.security.AuthFilter;
+import com.example.security.JwtAuthFilter;
+import com.example.security.JwtService;
 import com.example.security.TokenService;
 import com.example.service.MenuService;
 import com.example.service.UserService;
@@ -24,17 +26,22 @@ public class App {
         // Бизнес слой (използваме твоите конструктори без аргументи)
         var userService = new UserService();
         var menuService = new MenuService();
-        var tokenService = new TokenService();
+        //var tokenService = new TokenService();
+        String secret = System.getenv().getOrDefault("JWT_SECRET",
+                "rZg9l5mVxqkz6j+QG3WkX1XzF9yR8m2cQ3ZrT5wY2pA="); // ПРИМЕР! Смени го.
+        long ttlSeconds = 3600; // 1 час
+
+        var jwt = new JwtService(secret, ttlSeconds);
 
         // Контролери
-        var authController = new AuthController(userService, tokenService);
+        var authController = new AuthController(userService, jwt);
         var menuController = new MenuController(menuService);
 
         // Филтри
         var cors = new CorsFilter();
         var access = new AccessLogFilter();
-        var authRequired = new AuthFilter(AuthFilter.Mode.REQUIRED, tokenService);
-        var authOptional = new AuthFilter(AuthFilter.Mode.OPTIONAL, tokenService);
+        var authRequired = new JwtAuthFilter(JwtAuthFilter.Mode.REQUIRED, jwt);
+        var authOptional = new JwtAuthFilter(JwtAuthFilter.Mode.OPTIONAL, jwt);
 
         // --- Роути ---
         // Auth
