@@ -23,7 +23,6 @@ public class App {
         int port = Integer.getInteger("PORT", 8080);
         HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
 
-        // Бизнес слой (използваме твоите конструктори без аргументи)
         var userService = new UserService();
         var menuService = new MenuService();
         //var tokenService = new TokenService();
@@ -33,17 +32,14 @@ public class App {
 
         var jwt = new JwtService(secret, ttlSeconds);
 
-        // Контролери
         var authController = new AuthController(userService, jwt);
         var menuController = new MenuController(menuService);
 
-        // Филтри
         var cors = new CorsFilter();
         var access = new AccessLogFilter();
         var authRequired = new JwtAuthFilter(JwtAuthFilter.Mode.REQUIRED, jwt);
         var authOptional = new JwtAuthFilter(JwtAuthFilter.Mode.OPTIONAL, jwt);
 
-        // --- Роути ---
         // Auth
         HttpContext register = server.createContext("/auth/register", authController::handleRegister);
         register.getFilters().add(cors); register.getFilters().add(access);
@@ -51,7 +47,6 @@ public class App {
         HttpContext login = server.createContext("/auth/login", authController::handleLogin);
         login.getFilters().add(cors); login.getFilters().add(access);
 
-        // Menu: примерни GET/POST за напитки и детайли за пица
         HttpContext drinks = server.createContext("/menu/drinks", menuController::listOrCreateDrinks);
         drinks.getFilters().add(cors); drinks.getFilters().add(authOptional); drinks.getFilters().add(access);
 
@@ -71,7 +66,6 @@ public class App {
                 "error","not_found","path", ex.getRequestURI().getPath())));
         notFound.getFilters().add(cors); notFound.getFilters().add(access);
 
-        // Многопоточност + shutdown
         server.setExecutor(Executors.newFixedThreadPool(Math.max(4, Runtime.getRuntime().availableProcessors()*2)));
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { System.out.println("\nShutting down..."); server.stop(1); }));
 

@@ -20,7 +20,6 @@ public class MenuController {
     public MenuController(MenuService menu){ this.menu = menu; }
 
     private UserRole role(HttpExchange ex) {
-        // ако има логнат user -> можеш да вържеш реална роля; за сега приемаме CUSTOMER
         return UserRole.CUSTOMER;
     }
 
@@ -31,7 +30,6 @@ public class MenuController {
         HttpUtils.sendJson(ex, 200, pizzas);
     }
 
-    // GET /menu/drinks  | POST /menu/drinks (примерно създаване в DAO ако имаш)
     public void listOrCreateDrinks(HttpExchange ex) throws IOException {
         String method = ex.getRequestMethod();
         if ("GET".equalsIgnoreCase(method)) {
@@ -40,14 +38,12 @@ public class MenuController {
             return;
         }
         if ("POST".equalsIgnoreCase(method)) {
-            // тук, ако имаш DrinkDao.create(...) в MenuService, можеш да добавиш десериализация и създаване
             HttpUtils.sendJson(ex, 501, Map.of("error","not_implemented","message","Add create drink in MenuService/DAO"));
             return;
         }
         HttpUtils.methodNotAllowed(ex, "GET, POST");
     }
 
-    // /menu/pizzas/{id}/details  (GET; по желание PUT/DELETE нататък)
     public void pizzaDetailsOrUpdateOrDelete(HttpExchange ex) throws IOException {
         String path = ex.getRequestURI().getPath(); // /menu/pizzas/{id}/details
         String[] p = path.split("/");

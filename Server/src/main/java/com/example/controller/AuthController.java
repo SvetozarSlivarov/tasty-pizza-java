@@ -30,7 +30,6 @@ public class AuthController {
         var u = users.login(req.username, req.password);
         if (u.isEmpty()) { HttpUtils.sendJson(ex, 401, Map.of("error","invalid_credentials")); return; }
 
-        // взимаме ролята от модела (ако имаш)
         var role = u.get().getRole() != null ? u.get().getRole().name() : UserRole.CUSTOMER.name();
         String token = jwt.issue(req.username, role);
         HttpUtils.sendJson(ex, 200, new AuthResponse(req.username, token));
@@ -44,7 +43,6 @@ public class AuthController {
         boolean ok = users.register(req.fullname, req.username, req.password);
         if (!ok) { HttpUtils.sendJson(ex, 409, Map.of("error","username_exists")); return; }
 
-        // новорегистрираният е CUSTOMER по подразбиране
         String token = jwt.issue(req.username, UserRole.CUSTOMER.name());
         HttpUtils.sendJson(ex, 201, new AuthResponse(req.username, token));
     }

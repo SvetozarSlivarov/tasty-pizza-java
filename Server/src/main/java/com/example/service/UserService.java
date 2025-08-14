@@ -4,6 +4,7 @@ import com.example.dao.UserDao;
 import com.example.dao.impl.UserDaoImpl;
 import com.example.model.User;
 import com.example.model.enums.UserRole;
+import com.example.security.Passwords;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,19 +36,21 @@ public class UserService {
         return userDao.delete(id);
     }
 
-    public Optional<User> login(String username, String password) {
-        User user = userDao.findByUsernameAndPassword(username, password);
-        return Optional.ofNullable(user);
+    public Optional<User> login(String username, String passwordPlain) {
+        User user = userDao.findByUsername(username);
+        if (user == null) return Optional.empty();
+        boolean ok = Passwords.verify(passwordPlain, user.getPassword());
+        return ok ? Optional.of(user) : Optional.empty();
     }
 
     public boolean existsByUsername(String username) {
         return userDao.findByUsername(username) != null;
     }
 
-    public boolean register(String fullname, String username, String password) {
+    public boolean register(String fullname, String username, String passwordPlain) {
         if (existsByUsername(username)) return false;
-
-        User user = new User(fullname, username, password, UserRole.CUSTOMER);
+        User user = new User(fullname, username, null, UserRole.CUSTOMER);
+        user.setPassword(Passwords.hash(passwordPlain));
         return userDao.save(user);
     }
 }

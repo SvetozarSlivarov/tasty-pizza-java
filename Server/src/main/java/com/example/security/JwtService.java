@@ -14,7 +14,6 @@ public class JwtService {
     private final long ttlSeconds;
 
     public JwtService(String base64Secret, long ttlSeconds) {
-        // base64-encoded secret (минимум ~256-bit за HS256)
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
         this.ttlSeconds = ttlSeconds;
     }
