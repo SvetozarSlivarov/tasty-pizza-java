@@ -47,15 +47,21 @@ public class App {
         HttpContext login = server.createContext("/auth/login", authController::handleLogin);
         login.getFilters().add(cors); login.getFilters().add(access);
 
-        HttpContext drinks = server.createContext("/menu/drinks", menuController::listOrCreateDrinks);
-        drinks.getFilters().add(cors); drinks.getFilters().add(authOptional); drinks.getFilters().add(access);
+        HttpContext menuRoot = server.createContext("/menu", menuController::listMenu);
+        menuRoot.getFilters().add(authOptional);
+        // menuRoot.getFilters().add(cors);
+        // menuRoot.getFilters().add(access);
 
         HttpContext pizzas = server.createContext("/menu/pizzas", menuController::listPizzas);
-        pizzas.getFilters().add(cors); pizzas.getFilters().add(authOptional); pizzas.getFilters().add(access);
+        pizzas.getFilters().add(authOptional);
+        // pizzas.getFilters().add(cors);
+        // pizzas.getFilters().add(access);
 
-        HttpContext pizzaDetails = server.createContext("/menu/pizzas/");
-        pizzaDetails.setHandler(exchange -> menuController.pizzaDetailsOrUpdateOrDelete(exchange));
-        pizzaDetails.getFilters().add(cors); pizzaDetails.getFilters().add(authOptional); pizzaDetails.getFilters().add(access);
+
+        HttpContext drinks = server.createContext("/menu/drinks", menuController::listOrCreateDrinks);
+        drinks.getFilters().add(authOptional);
+        // drinks.getFilters().add(cors);
+        // drinks.getFilters().add(access);
 
         // Health
         HttpContext health = server.createContext("/health", ex -> HttpUtils.sendText(ex, 200, "OK"));

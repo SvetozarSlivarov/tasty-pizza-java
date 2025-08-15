@@ -22,7 +22,9 @@ public class JwtAuthFilter extends Filter {
             try {
                 var u = jwt.verify(token);
                 ex.setAttribute("user", u.username);
-                ex.setAttribute("role", u.role);
+                if (u.role != null) {
+                    ex.setAttribute("role", u.role);
+                }
             } catch (Exception e) {
                 if (mode == Mode.REQUIRED) {
                     ex.getResponseHeaders().add("WWW-Authenticate", "Bearer error=\"invalid_token\"");

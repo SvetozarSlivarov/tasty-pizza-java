@@ -1,6 +1,8 @@
 package com.example.http;
 
+import com.example.exception.BadRequestException;
 import com.example.utils.JsonUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -13,6 +15,16 @@ public final class HttpUtils {
         try (InputStream is = ex.getRequestBody(); ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             is.transferTo(baos);
             return baos.toString(StandardCharsets.UTF_8);
+        }
+    }
+    public static <T> T parseJson(HttpExchange ex, Class<T> clazz) {
+        try (InputStream is = ex.getRequestBody()) {
+            if (is == null) throw new BadRequestException("Empty body");
+            return JsonUtil.fromJson(is, clazz);
+        } catch (JsonProcessingException e) {
+            throw new BadRequestException("Invalid JSON: " + e.getOriginalMessage());
+        } catch (IOException e) {
+            throw new RuntimeException("I/O reading request body", e);
         }
     }
     public static void sendText(HttpExchange ex, int status, String text) throws IOException {

@@ -8,7 +8,7 @@ public interface PizzaDao {
     List<Pizza> findAll();
 
     List<Pizza> findAvailable();
-    boolean save(Pizza pizza);
-    boolean update(Pizza pizza);
-    boolean delete(int id);
+    Pizza save(Pizza pizza);
+    Pizza update(Pizza pizza);
+    Pizza delete(int id);
 }

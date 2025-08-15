@@ -40,41 +40,54 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
     }
 
     @Override
-    public boolean save(Pizza pizza) {
+    public Pizza save(Pizza pizza) {
         String sql = "INSERT INTO pizzas(name, description, base_price, is_available) VALUES(?,?,?,?)";
         try {
-            int id = updateReturningId(sql, preparedStatement -> {
-                preparedStatement.setString(1, pizza.getName());
-                preparedStatement.setString(2, pizza.getDescription());
-                preparedStatement.setBigDecimal(3, pizza.getPrice());
-                preparedStatement.setBoolean(4, pizza.isAvailable());
+            int id = updateReturningId(sql, ps -> {
+                ps.setString(1, pizza.getName());
+                ps.setString(2, pizza.getDescription());
+                ps.setBigDecimal(3, pizza.getPrice());
+                ps.setBoolean(4, pizza.isAvailable());
             });
-            if (id > 0) pizza.setId(id);
-            return id > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+            if (id <= 0) return null;
+            pizza.setId(id);
+            return pizza;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
-    public boolean update(Pizza pizza) {
+    public Pizza update(Pizza pizza) {
         String sql = "UPDATE pizzas SET name=?, description=?, base_price=?, is_available=? WHERE id=?";
         try {
-            int rows = update(sql, preparedStatement -> {
-                preparedStatement.setString(1, pizza.getName());
-                preparedStatement.setString(2, pizza.getDescription());
-                preparedStatement.setBigDecimal(3, pizza.getPrice());
-                preparedStatement.setBoolean(4, pizza.isAvailable());
-                preparedStatement.setInt(5, pizza.getId());
+            int rows = update(sql, ps -> {
+                ps.setString(1, pizza.getName());
+                ps.setString(2, pizza.getDescription());
+                ps.setBigDecimal(3, pizza.getPrice());
+                ps.setBoolean(4, pizza.isAvailable());
+                ps.setInt(5, pizza.getId());
             });
-            return rows > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+            return rows > 0 ? pizza : null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
-    public boolean delete(int id) {
+    public Pizza delete(int id) {
         try {
+            Pizza existing = findById(id);
+            if (existing == null) return null;
             String sql = "DELETE FROM pizzas WHERE id=?";
-            return update(sql, preparedStatement -> preparedStatement.setInt(1, id)) > 0; }
-        catch (SQLException e) { e.printStackTrace(); return false; }
+            int rows = update(sql, ps -> ps.setInt(1, id));
+            return rows > 0 ? existing : null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private Pizza map(ResultSet resultSet) throws SQLException {

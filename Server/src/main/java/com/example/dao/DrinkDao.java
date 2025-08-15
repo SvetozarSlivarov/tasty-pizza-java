@@ -8,7 +8,7 @@ public interface DrinkDao {
     List<Drink> findAll();
 
     List<Drink> findAvailable();
-    boolean save(Drink drink);
-    boolean update(Drink drink);
-    boolean delete(int id);
+    Drink save(Drink drink);
+    Drink update(Drink drink);
+    Drink delete(int id);
 }

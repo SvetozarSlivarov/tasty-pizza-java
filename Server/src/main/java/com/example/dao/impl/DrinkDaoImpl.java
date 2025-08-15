@@ -43,49 +43,53 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
     }
 
     @Override
-    public boolean save(Drink drink) {
+    public Drink save(Drink drink) {
         String sql = "INSERT INTO drinks(name, description, price, is_available) VALUES(?,?,?,?)";
         try {
-            int id = updateReturningId(sql, preparedStatement -> {
-                preparedStatement.setString(1, drink.getName());
-                preparedStatement.setString(2, drink.getDescription());
-                preparedStatement.setBigDecimal(3, drink.getPrice());
-                preparedStatement.setBoolean(4, drink.isAvailable());
+            int id = updateReturningId(sql, ps -> {
+                ps.setString(1, drink.getName());
+                ps.setString(2, drink.getDescription());
+                ps.setBigDecimal(3, drink.getPrice());
+                ps.setBoolean(4, drink.isAvailable());
             });
-            if (id > 0) drink.setId(id);
-            return id > 0;
+            if (id <= 0) return null;
+            drink.setId(id);
+            return drink;
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
 
     @Override
-    public boolean update(Drink drink) {
+    public Drink update(Drink drink) {
         String sql = "UPDATE drinks SET name=?, description=?, price=?, is_available=? WHERE id=?";
         try {
-            int rows = update(sql, preparedStatement -> {
-                preparedStatement.setString(1, drink.getName());
-                preparedStatement.setString(2, drink.getDescription());
-                preparedStatement.setBigDecimal(3, drink.getPrice());
-                preparedStatement.setBoolean(4, drink.isAvailable());
-                preparedStatement.setInt(5, drink.getId());
+            int rows = update(sql, ps -> {
+                ps.setString(1, drink.getName());
+                ps.setString(2, drink.getDescription());
+                ps.setBigDecimal(3, drink.getPrice());
+                ps.setBoolean(4, drink.isAvailable());
+                ps.setInt(5, drink.getId());
             });
-            return rows > 0;
+            return rows > 0 ? drink : null;
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
 
     @Override
-    public boolean delete(int id) {
+    public Drink delete(int id) {
         try {
+            Drink existing = findById(id);
+            if (existing == null) return null;
             String sql = "DELETE FROM drinks WHERE id=?";
-            return update(sql, preparedStatement -> preparedStatement.setInt(1, id)) > 0; }
-        catch (SQLException e) {
+            int rows = update(sql, ps -> ps.setInt(1, id));
+            return rows > 0 ? existing : null;
+        } catch (SQLException e) {
             e.printStackTrace();
-            return false;
+            return null;
         }
     }
 
