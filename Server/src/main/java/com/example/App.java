@@ -3,6 +3,7 @@ package com.example;
 
 import com.example.controller.AuthController;
 import com.example.controller.MenuController;
+import com.example.controller.UserController;
 import com.example.http.AccessLogFilter;
 import com.example.http.CorsFilter;
 import com.example.http.HttpUtils;
@@ -43,6 +44,7 @@ public class App {
 
         var authController = new AuthController(userService, jwt);
         var menuController = new MenuController(menuService);
+        UserController userController = new UserController(userService);
 
         var cors = new CorsFilter();
         var access = new AccessLogFilter();
@@ -71,6 +73,54 @@ public class App {
         drinks.getFilters().add(authOptional);
         // drinks.getFilters().add(cors);
         // drinks.getFilters().add(access);
+
+        HttpContext me = server.createContext("/users/me", ex -> {
+            String m = ex.getRequestMethod();
+            switch (m) {
+                case "GET"    -> userController.getMe(ex);
+                case "PUT"    -> userController.updateMe(ex);
+                case "DELETE" -> userController.deleteMe(ex);
+                default       -> HttpUtils.methodNotAllowed(ex, "GET, PUT, DELETE");
+            }
+        });
+
+        me.getFilters().add(cors);
+        me.getFilters().add(access);
+        me.getFilters().add(authRequired);
+
+
+        HttpContext byId = server.createContext("/users/", ex -> {
+            String path = ex.getRequestURI().getPath();
+            String method = ex.getRequestMethod();
+
+            if (path.matches("^/users/\\d+/role$") && "PUT".equalsIgnoreCase(method)) {
+                userController.updateRoleById(ex);
+            } else if (path.matches("^/users/\\d+$") && "DELETE".equalsIgnoreCase(method)) {
+                userController.deleteById(ex);
+            } else {
+                HttpUtils.sendJson(ex, 404, java.util.Map.of("error", "not_found"));
+            }
+        });
+        byId.getFilters().add(cors);
+        byId.getFilters().add(access);
+        byId.getFilters().add(authRequired);
+
+
+        HttpContext byUsername = server.createContext("/users/by-username/", ex -> {
+            String path = ex.getRequestURI().getPath();
+            String method = ex.getRequestMethod();
+
+            if (path.matches("^/users/by-username/[^/]+/role$") && "PUT".equalsIgnoreCase(method)) {
+                userController.updateRoleByUsername(ex);
+            } else if (path.matches("^/users/by-username/[^/]+$") && "DELETE".equalsIgnoreCase(method)) {
+                userController.deleteByUsername(ex);
+            } else {
+                HttpUtils.sendJson(ex, 404, java.util.Map.of("error", "not_found"));
+            }
+        });
+        byUsername.getFilters().add(cors);
+        byUsername.getFilters().add(access);
+        byUsername.getFilters().add(authRequired);
 
         // Health
         HttpContext health = server.createContext("/health", ex -> HttpUtils.sendText(ex, 200, "OK"));

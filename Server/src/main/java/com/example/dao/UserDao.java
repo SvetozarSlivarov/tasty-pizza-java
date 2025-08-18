@@ -14,6 +14,7 @@ public interface UserDao {
     User findByUsernameAndPassword(String username, String password);
 
     List<User> findAll();
+    boolean deleteById(int id);
     boolean save(User user);
 
     boolean update(User user);

@@ -2,9 +2,12 @@ package com.example.dao.impl;
 
 import com.example.dao.UserDao;
 import com.example.dao.base.AbstractDao;
+import com.example.db.DBConnection;
 import com.example.model.User;
 import com.example.model.enums.UserRole;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -44,6 +47,18 @@ public class UserDaoImpl extends AbstractDao implements UserDao {
         try {
             return queryList(sql, null, this::map);
         } catch (SQLException e) { e.printStackTrace(); return new ArrayList<>(); }
+    }
+    @Override
+    public boolean deleteById(int id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override

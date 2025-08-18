@@ -13,5 +13,6 @@
     <file url="file://$PROJECT_DIR$/Server/src/main/java/com/example/dao/impl/UserDaoImpl.java" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/Server/src/main/java/com/example/db/DatabaseInitializer.java" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/Server/src/main/java/com/example/db/SchemaBuilder.java" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/Server/src/main/java/com/example/db/SeedData.java" dialect="GenericSQL" />
   </component>
 </project>
