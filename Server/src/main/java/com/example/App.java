@@ -6,20 +6,29 @@ import com.example.controller.MenuController;
 import com.example.http.AccessLogFilter;
 import com.example.http.CorsFilter;
 import com.example.http.HttpUtils;
-import com.example.security.AuthFilter;
 import com.example.security.JwtAuthFilter;
 import com.example.security.JwtService;
-import com.example.security.TokenService;
 import com.example.service.MenuService;
 import com.example.service.UserService;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
+import com.example.db.DatabaseInitializer;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
 public class App {
     public static void main(String[] args) throws Exception {
+
+        try {
+            DatabaseInitializer.initialize();
+        } catch (Throwable t) {
+            System.err.println("FATAL: Database initialization failed.");
+            t.printStackTrace();
+            System.exit(1); // не стартирай сървъра без БД
+        }
+
+
         int port = Integer.getInteger("PORT", 8080);
         HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
 

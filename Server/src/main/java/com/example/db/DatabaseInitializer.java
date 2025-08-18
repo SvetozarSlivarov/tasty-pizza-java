@@ -7,6 +7,7 @@ public class DatabaseInitializer {
     public static void initialize() {
         createDatabaseIfNotExists();
         SchemaBuilder.createAllTables();
+        SeedData.ensureAdminUser();
     }
 
     private static void createDatabaseIfNotExists() {
