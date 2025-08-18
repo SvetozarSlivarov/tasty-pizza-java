@@ -17,16 +17,19 @@ public abstract class AbstractDao {
     public interface Mapper<T> {
         T map(ResultSet resultSet) throws SQLException;
     }
-
+    private static ResultSet executeQuery(PreparedStatement ps, Binder binder) throws SQLException {
+        if (binder != null) binder.bind(ps);
+        return ps.executeQuery();
+    }
     protected <T> List<T> queryList(String sql, Binder binder, Mapper<T> mapper) throws SQLException {
         try (Connection connection = DBConnection.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            if (binder != null) binder.bind(preparedStatement);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                List<T> out = new ArrayList<>();
-                while (resultSet.next()) out.add(mapper.map(resultSet));
-                return out;
+             PreparedStatement preparedStatement = connection.prepareStatement(sql);
+             ResultSet resultSet = executeQuery(preparedStatement, binder)){
+            List<T> out = new ArrayList<>();
+            while (resultSet.next()) {
+                out.add(mapper.map(resultSet));
             }
+            return out;
         }
     }
 
