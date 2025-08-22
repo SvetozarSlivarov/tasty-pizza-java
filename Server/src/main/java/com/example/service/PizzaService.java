@@ -1,0 +1,115 @@
+package com.example.service;
+
+import com.example.dao.*;
+import com.example.dao.impl.*;
+import com.example.dto.*;
+import com.example.exception.NotFoundException;
+import com.example.model.Ingredient;
+import com.example.model.Pizza;
+import com.example.model.dto.PizzaDetails;
+import com.example.model.enums.UserRole;
+import com.example.utils.mapper.MenuMappers;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class PizzaService {
+    private final PizzaDao pizzaDao = new PizzaDaoImpl();
+    private final IngredientDao ingredientDao = new IngredientDaoImpl();
+    private final PizzaIngredientDao pizzaIngredientDao = new PizzaIngredientDaoImpl();
+    private final PizzaAllowedIngredientDao allowedDao = new PizzaAllowedIngredientDaoImpl();
+
+    // ===== Pizzas =====
+    public List<Pizza> findAll(boolean availableOnly, UserRole role) {
+        if (availableOnly || role != UserRole.ADMIN) return pizzaDao.findAvailable();
+        return pizzaDao.findAll();
+    }
+
+    public Pizza create(PizzaCreateRequest req) {
+        Pizza p = new Pizza(req.name(), req.description(), req.price(), Boolean.TRUE.equals(req.available()));
+        return pizzaDao.save(p);
+    }
+
+    public Pizza update(int id, PizzaUpdateRequest req) {
+        Pizza p = pizzaDao.findById(id);
+        if (p == null) throw new NotFoundException("pizza_not_found");
+        MenuMappers.applyUpdate(req, p);
+        return pizzaDao.update(p);
+    }
+
+    public void delete(int id) {
+        // 1) почисти свързани записи
+        var baseIds = pizzaIngredientDao.findIngredientIdsByPizzaId(id);
+        for (Integer ingId : baseIds) pizzaIngredientDao.remove(id, ingId);
+        var allowIds = allowedDao.findIngredientIdsByPizzaId(id);
+        for (Integer ingId : allowIds) allowedDao.disallow(id, ingId);
+        // 2) изтрий самата пица
+        Pizza deleted = pizzaDao.delete(id);
+        if (deleted == null) throw new NotFoundException("pizza_not_found");
+    }
+
+    // ===== Details (pizza + ingredients + allowed) =====
+    public PizzaDetails getDetails(int pizzaId, UserRole role) {
+        Pizza pizza = pizzaDao.findById(pizzaId);
+        if (pizza == null) return null;
+        if (role != UserRole.ADMIN && !pizza.isAvailable()) return null;
+
+        var ingredientIds = pizzaIngredientDao.findIngredientIdsByPizzaId(pizzaId);
+        var allowedIds    = allowedDao.findIngredientIdsByPizzaId(pizzaId);
+
+        var ingredients = ingredientDao.findByIds(ingredientIds);
+        var allowed     = ingredientDao.findByIds(allowedIds);
+        return new PizzaDetails(pizza, ingredients, allowed);
+    }
+
+    // ===== Full-replace composition helpers =====
+    public void replaceBaseIngredients(int pizzaId, List<Integer> newIds, boolean requireSubsetOfAllowed) {
+        ensurePizzaExists(pizzaId);
+        validateIngredientsExist(newIds);
+
+        if (requireSubsetOfAllowed) {
+            var allowed = new HashSet<>(allowedDao.findIngredientIdsByPizzaId(pizzaId));
+            if (!allowed.containsAll(newIds)) {
+                throw new IllegalArgumentException("base_ingredients_must_be_subset_of_allowed");
+            }
+        }
+
+        var current = new HashSet<>(pizzaIngredientDao.findIngredientIdsByPizzaId(pizzaId));
+        var target  = new HashSet<>(newIds);
+
+        // add missing
+        for (Integer add : diff(target, current)) pizzaIngredientDao.add(pizzaId, add);
+        // remove extra
+        for (Integer rem : diff(current, target)) pizzaIngredientDao.remove(pizzaId, rem);
+    }
+
+    public void replaceAllowedIngredients(int pizzaId, List<Integer> newIds, boolean enforceSupersetOfBase) {
+        ensurePizzaExists(pizzaId);
+        validateIngredientsExist(newIds);
+
+        var current = new HashSet<>(allowedDao.findIngredientIdsByPizzaId(pizzaId));
+        var target  = new HashSet<>(newIds);
+
+        for (Integer add : diff(target, current)) allowedDao.allow(pizzaId, add);
+        for (Integer rem : diff(current, target)) allowedDao.disallow(pizzaId, rem);
+
+        if (enforceSupersetOfBase) {
+            var base = new HashSet<>(pizzaIngredientDao.findIngredientIdsByPizzaId(pizzaId));
+            if (!target.containsAll(base)) {
+                throw new IllegalArgumentException("allowed_must_include_all_base_ingredients");
+            }
+        }
+    }
+
+    private void validateIngredientsExist(List<Integer> ids) {
+        if (ids == null) return;
+        var found = ingredientDao.findByIds(ids).stream().map(Ingredient::getId).collect(Collectors.toSet());
+        for (Integer id : ids) if (!found.contains(id)) throw new NotFoundException("ingredient_"+id+"_not_found");
+    }
+    private void ensurePizzaExists(int id) {
+        if (pizzaDao.findById(id) == null) throw new NotFoundException("pizza_not_found");
+    }
+    private static <T> Set<T> diff(Set<T> a, Set<T> b) {
+        var s = new HashSet<>(a); s.removeAll(b); return s;
+    }
+}

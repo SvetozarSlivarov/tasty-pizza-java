@@ -1,15 +1,15 @@
 // src/com/example/App.java
 package com.example;
 
-import com.example.controller.AuthController;
-import com.example.controller.MenuController;
-import com.example.controller.UserController;
+import com.example.controller.*;
 import com.example.http.AccessLogFilter;
 import com.example.http.CorsFilter;
 import com.example.http.HttpUtils;
 import com.example.security.JwtAuthFilter;
 import com.example.security.JwtService;
+import com.example.service.IngredientService;
 import com.example.service.MenuService;
+import com.example.service.PizzaService;
 import com.example.service.UserService;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
@@ -43,8 +43,12 @@ public class App {
         var jwt = new JwtService(secret, ttlSeconds);
 
         var authController = new AuthController(userService, jwt);
-        var menuController = new MenuController(menuService);
         UserController userController = new UserController(userService);
+        var pizzaService = new PizzaService();
+        var ingredientService = new IngredientService();
+
+        var pizzaController = new PizzaController(pizzaService, jwt);
+        var ingredientController = new IngredientController(ingredientService, jwt);
 
         var cors = new CorsFilter();
         var access = new AccessLogFilter();
@@ -53,26 +57,53 @@ public class App {
 
         // Auth
         HttpContext register = server.createContext("/auth/register", authController::handleRegister);
-        register.getFilters().add(cors); register.getFilters().add(access);
-
         HttpContext login = server.createContext("/auth/login", authController::handleLogin);
-        login.getFilters().add(cors); login.getFilters().add(access);
+        HttpContext pizzas = server.createContext("/api/pizzas", ex -> {
+            try {
+                String method = ex.getRequestMethod();
+                var path = ex.getRequestURI().getPath();
+                // /api/pizzas or /api/pizzas/{id} or /api/pizzas/{id}/ingredients ...
+                var parts = path.split("/");
+                if (parts.length == 3) {
+                    if ("GET".equals(method)) pizzaController.handleList(ex);
+                    else if ("POST".equals(method)) pizzaController.handleCreate(ex);
+                    else HttpUtils.methodNotAllowed(ex, "GET,POST");
+                } else if (parts.length >= 4) {
+                    int id = Integer.parseInt(parts[3]);
+                    if (parts.length == 4) {
+                        if ("GET".equals(method)) pizzaController.handleGet(ex, id);
+                        else if ("PATCH".equals(method)) pizzaController.handleUpdate(ex, id);
+                        else if ("DELETE".equals(method)) pizzaController.handleDelete(ex, id);
+                        else HttpUtils.methodNotAllowed(ex, "GET,PATCH,DELETE");
+                    } else if (parts.length == 5) {
+                        String sub = parts[4];
+                        if ("ingredients".equals(sub) && "PUT".equals(method))
+                            pizzaController.handleReplaceBase(ex, id);
+                        else if ("allowed-ingredients".equals(sub) && "PUT".equals(method))
+                            pizzaController.handleReplaceAllowed(ex, id);
+                        else HttpUtils.methodNotAllowed(ex, "PUT");
+                    } else HttpUtils.notFound(ex);
+                } else HttpUtils.notFound(ex);
+            } catch (Exception e) { HttpUtils.send500(ex, e); }
+        });
 
-        HttpContext menuRoot = server.createContext("/menu", menuController::listMenu);
-        menuRoot.getFilters().add(authOptional);
-        // menuRoot.getFilters().add(cors);
-        // menuRoot.getFilters().add(access);
-
-        HttpContext pizzas = server.createContext("/menu/pizzas", menuController::listPizzas);
-        pizzas.getFilters().add(authOptional);
-        // pizzas.getFilters().add(cors);
-        // pizzas.getFilters().add(access);
-
-
-        HttpContext drinks = server.createContext("/menu/drinks", menuController::listOrCreateDrinks);
-        drinks.getFilters().add(authOptional);
-        // drinks.getFilters().add(cors);
-        // drinks.getFilters().add(access);
+        HttpContext ingredients = server.createContext("/api/ingredients", ex -> {
+            try {
+                String method = ex.getRequestMethod();
+                var path = ex.getRequestURI().getPath();
+                var parts = path.split("/");
+                if (parts.length == 3) {
+                    if ("GET".equals(method)) ingredientController.handleList(ex);
+                    else if ("POST".equals(method)) ingredientController.handleCreate(ex);
+                    else HttpUtils.methodNotAllowed(ex, "GET,POST");
+                } else if (parts.length == 4) {
+                    int id = Integer.parseInt(parts[3]);
+                    if ("PATCH".equals(method)) ingredientController.handleUpdate(ex, id);
+                    else if ("DELETE".equals(method)) ingredientController.handleDelete(ex, id);
+                    else HttpUtils.methodNotAllowed(ex, "PATCH,DELETE");
+                } else HttpUtils.notFound(ex);
+            } catch (Exception e) { HttpUtils.send500(ex, e); }
+        });
 
         HttpContext me = server.createContext("/users/me", ex -> {
             String m = ex.getRequestMethod();
@@ -83,11 +114,6 @@ public class App {
                 default       -> HttpUtils.methodNotAllowed(ex, "GET, PUT, DELETE");
             }
         });
-
-        me.getFilters().add(cors);
-        me.getFilters().add(access);
-        me.getFilters().add(authRequired);
-
 
         HttpContext byId = server.createContext("/users/", ex -> {
             String path = ex.getRequestURI().getPath();
@@ -101,10 +127,6 @@ public class App {
                 HttpUtils.sendJson(ex, 404, java.util.Map.of("error", "not_found"));
             }
         });
-        byId.getFilters().add(cors);
-        byId.getFilters().add(access);
-        byId.getFilters().add(authRequired);
-
 
         HttpContext byUsername = server.createContext("/users/by-username/", ex -> {
             String path = ex.getRequestURI().getPath();
@@ -118,9 +140,13 @@ public class App {
                 HttpUtils.sendJson(ex, 404, java.util.Map.of("error", "not_found"));
             }
         });
-        byUsername.getFilters().add(cors);
-        byUsername.getFilters().add(access);
-        byUsername.getFilters().add(authRequired);
+        addFilters(pizzas, cors, access, authOptional);
+        addFilters(ingredients, cors, access, authOptional);
+        addFilters(me, cors, access, authRequired);
+        addFilters(byId, cors, access, authRequired);
+        addFilters(byUsername, cors, access, authRequired);
+        addFilters(register, cors, access, null);
+        addFilters(login, cors, access, null);
 
         // Health
         HttpContext health = server.createContext("/health", ex -> HttpUtils.sendText(ex, 200, "OK"));
@@ -136,5 +162,13 @@ public class App {
 
         System.out.println("HTTP server listening on http://localhost:" + port);
         server.start();
+    }
+    private static void addFilters(HttpContext ctx,
+                                   CorsFilter cors,
+                                   AccessLogFilter access,
+                                   JwtAuthFilter auth) {
+        ctx.getFilters().add(cors);
+        ctx.getFilters().add(access);
+        if (auth != null) ctx.getFilters().add(auth);
     }
 }

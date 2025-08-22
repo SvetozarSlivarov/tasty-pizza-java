@@ -1,13 +1,17 @@
 package com.example.http;
 
 import com.example.exception.BadRequestException;
+import com.example.model.enums.UserRole;
+import com.example.security.JwtService;
 import com.example.utils.JsonUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class HttpUtils {
@@ -40,9 +44,74 @@ public final class HttpUtils {
         ex.sendResponseHeaders(status, bytes.length);
         try (OutputStream os = ex.getResponseBody()) { os.write(bytes); } finally { ex.close(); }
     }
+    public static void sendStatus(HttpExchange ex, int statusCode) throws IOException {
+        ex.sendResponseHeaders(statusCode, -1);
+        ex.close();
+    }
     public static void methodNotAllowed(HttpExchange ex, String allow) throws IOException {
         ex.getResponseHeaders().set("Allow", allow);
         sendJson(ex, 405, Map.of("error","method_not_allowed","allow",allow));
+    }
+    public static void requireMethod(HttpExchange ex, String expected) throws IOException {
+        String actual = ex.getRequestMethod();
+        if (!expected.equalsIgnoreCase(actual)) {
+            sendJson(ex, 405, Map.of("error", "method_not_allowed", "allowed", expected));
+            throw new IllegalStateException("Invalid method: " + actual);
+        }
+    }
+    public static void requireRole(HttpExchange ex, JwtService jwt, UserRole required) throws IOException {
+        UserRole role = roleOr(ex, UserRole.CUSTOMER, jwt);
+        if (role.ordinal() < required.ordinal()) {
+            sendJson(ex, 403, Map.of("error", "forbidden"));
+            throw new IllegalStateException("Forbidden: need role " + required);
+        }
+    }
+    public static UserRole roleOr(HttpExchange ex, UserRole fallback, JwtService jwt) {
+        try {
+            String auth = ex.getRequestHeaders().getFirst("Authorization");
+            if (auth == null || !auth.startsWith("Bearer ")) return fallback;
+            String token = auth.substring(7);
+            return jwt.extractUserRole(token);
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+    public static void notFound(HttpExchange ex) throws IOException {
+        sendJson(ex, 404, Map.of("error", "not_found"));
+    }
+    public static void send500(HttpExchange ex, Exception e) throws IOException {
+        String message = e.getMessage() != null ? e.getMessage() : e.toString();
+        sendJson(ex, 500, Map.of(
+                "error", "internal_server_error",
+                "message", message
+        ));
+    }
+    public static String queryParam(HttpExchange ex, String name) {
+        return parseQuery(ex).get(name);
+    }
+    public static Integer queryParamInt(HttpExchange ex, String name) {
+        String v = queryParam(ex, name);
+        if (v == null || v.isBlank()) return null;
+        try { return Integer.parseInt(v); }
+        catch (NumberFormatException e) { return null; }
+    }
+    private static Map<String, String> parseQuery(HttpExchange ex) {
+        Map<String, String> result = new HashMap<>();
+        String query = ex.getRequestURI().getRawQuery();
+        if (query == null || query.isEmpty()) return result;
+
+        for (String pair : query.split("&")) {
+            int idx = pair.indexOf('=');
+            if (idx > 0) {
+                String key = URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8);
+                String value = URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8);
+                result.put(key, value);
+            } else {
+                String key = URLDecoder.decode(pair, StandardCharsets.UTF_8);
+                result.put(key, "");
+            }
+        }
+        return result;
     }
     private HttpUtils(){}
 }

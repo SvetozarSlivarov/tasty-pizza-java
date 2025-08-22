@@ -1,5 +1,7 @@
 package com.example.security;
 
+import com.example.model.enums.UserRole;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.io.Decoders;
@@ -47,4 +49,20 @@ public class JwtService {
         public final Date expiresAt;
         public JwtUser(String u, String r, Date e){ this.username=u; this.role=r; this.expiresAt=e; }
     }
+    public UserRole extractUserRole(String token) {
+        var jwt = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token);
+
+        String role = jwt.getPayload().get("role", String.class);
+        if (role == null) return UserRole.CUSTOMER;
+
+        try {
+            return UserRole.valueOf(role.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return UserRole.CUSTOMER;
+        }
+    }
+
 }
