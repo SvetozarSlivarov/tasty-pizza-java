@@ -1,4 +1,4 @@
-package com.example.model.dto;
+package com.example.dao.impl;
 
 import com.example.model.Ingredient;
 import com.example.model.Pizza;

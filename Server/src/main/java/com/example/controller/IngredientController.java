@@ -32,10 +32,17 @@ public class IngredientController {
     public void handleCreate(HttpExchange ex) throws IOException {
         HttpUtils.requireMethod(ex, "POST");
         HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+
         var body = HttpUtils.readBody(ex);
-        Ingredient ing = JsonUtil.fromJson(body, Ingredient.class);
-        if (ing.getName() == null || ing.getType() == null) { HttpUtils.sendJson(ex, 400, Map.of("error","bad_request")); return; }
-        HttpUtils.sendJson(ex, 201, service.create(ing));
+        var dto = JsonUtil.fromJson(body, com.example.dto.IngredientCreateDto.class);
+
+        if (dto == null || dto.name == null || dto.name.isBlank() || dto.typeId == null || dto.typeId <= 0) {
+            HttpUtils.sendJson(ex, 400, java.util.Map.of("error", "bad_request"));
+            return;
+        }
+
+        var created = service.create(dto.name, dto.typeId);
+        HttpUtils.sendJson(ex, 201, created);
     }
 
     // PATCH /api/ingredients/{id} (ADMIN)

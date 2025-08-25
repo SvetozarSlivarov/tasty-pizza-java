@@ -6,7 +6,7 @@ import com.example.dto.*;
 import com.example.exception.NotFoundException;
 import com.example.model.Ingredient;
 import com.example.model.Pizza;
-import com.example.model.dto.PizzaDetails;
+import com.example.dao.impl.PizzaDetails;
 import com.example.model.enums.UserRole;
 import com.example.utils.mapper.MenuMappers;
 
@@ -38,12 +38,10 @@ public class PizzaService {
     }
 
     public void delete(int id) {
-        // 1) почисти свързани записи
         var baseIds = pizzaIngredientDao.findIngredientIdsByPizzaId(id);
         for (Integer ingId : baseIds) pizzaIngredientDao.remove(id, ingId);
         var allowIds = allowedDao.findIngredientIdsByPizzaId(id);
         for (Integer ingId : allowIds) allowedDao.disallow(id, ingId);
-        // 2) изтрий самата пица
         Pizza deleted = pizzaDao.delete(id);
         if (deleted == null) throw new NotFoundException("pizza_not_found");
     }

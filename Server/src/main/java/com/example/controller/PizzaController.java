@@ -3,7 +3,7 @@ package com.example.controller;
 import com.example.dto.*;
 import com.example.http.HttpUtils;
 import com.example.model.Pizza;
-import com.example.model.dto.PizzaDetails;
+import com.example.dao.impl.PizzaDetails;
 import com.example.model.enums.UserRole;
 import com.example.security.JwtService;
 import com.example.service.PizzaService;
