@@ -2,7 +2,7 @@ package com.example.service;
 
 import com.example.dao.*;
 import com.example.dao.impl.*;
-import com.example.exception.NotFoundException;
+import com.example.exception.*;
 import com.example.model.Ingredient;
 import com.example.model.IngredientType;
 
@@ -30,7 +30,33 @@ public class IngredientService {
         boolean ok = ingredientDao.delete(id);
         if (!ok) throw new NotFoundException("ingredient_not_found");
     }
+    public IngredientType getTypeOrThrow(int id) {
+        IngredientType t = ingredientTypeDao.findById(id);
+        if (t == null) throw new NotFoundException("ingredient_type_not_found");
+        return t;
+    }
 
-    // типове (ако ползваш CRUD за тях)
+    public IngredientType createType(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new BadRequestException("type_name_required");
+        }
+        var type = new IngredientType();
+        type.setName(name.trim());
+        boolean ok = ingredientTypeDao.save(type);
+        if (!ok) throw new BadRequestException("type_create_failed");
+        return type;
+    }
+
+    public Ingredient create(String name, int typeId) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new BadRequestException("ingredient_name_required");
+        }
+        var type = getTypeOrThrow(typeId);
+        var ing = new Ingredient(name.trim(), type);
+        boolean ok = ingredientDao.save(ing);
+        if (!ok) throw new BadRequestException("ingredient_create_failed");
+        return ing;
+    }
+
     public List<IngredientType> types() { return ingredientTypeDao.findAll(); }
 }
