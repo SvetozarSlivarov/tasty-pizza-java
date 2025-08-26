@@ -69,22 +69,4 @@ public class PizzaController {
         try { pizzas.delete(id); HttpUtils.sendStatus(ex, 204); }
         catch (Exception e) { HttpUtils.sendJson(ex, 404, Map.of("error","not_found")); }
     }
-
-    // PUT /api/pizzas/{id}/ingredients  (replace base)
-    public void handleReplaceBase(HttpExchange ex, int id) throws IOException {
-        HttpUtils.requireMethod(ex, "PUT");
-        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
-        var req = JsonUtil.fromJson(HttpUtils.readBody(ex), PizzaCompositionRequest.class);
-        pizzas.replaceBaseIngredients(id, req.ingredientIds(), /*requireSubsetOfAllowed*/ true);
-        HttpUtils.sendStatus(ex, 204);
-    }
-
-    // PUT /api/pizzas/{id}/allowed-ingredients  (replace allowed)
-    public void handleReplaceAllowed(HttpExchange ex, int id) throws IOException {
-        HttpUtils.requireMethod(ex, "PUT");
-        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
-        var req = JsonUtil.fromJson(HttpUtils.readBody(ex), PizzaCompositionRequest.class);
-        pizzas.replaceAllowedIngredients(id, req.ingredientIds(), /*enforceSupersetOfBase*/ true);
-        HttpUtils.sendStatus(ex, 204);
-    }
 }

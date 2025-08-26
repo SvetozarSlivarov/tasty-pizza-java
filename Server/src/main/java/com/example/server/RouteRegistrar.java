@@ -29,8 +29,6 @@ public class RouteRegistrar {
         apiR.register("GET",    "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleGet(ex, Integer.parseInt(m.group(1))));
         apiR.register("PATCH",  "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleUpdate(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleDelete(ex, Integer.parseInt(m.group(1))));
-        apiR.register("PUT",    "^/pizzas/(\\d+)/ingredients$",    (ex,m) -> beans.pizzaCtl.handleReplaceBase(ex, Integer.parseInt(m.group(1))));
-        apiR.register("PUT",    "^/pizzas/(\\d+)/allowed-ingredients$", (ex,m) -> beans.pizzaCtl.handleReplaceAllowed(ex, Integer.parseInt(m.group(1))));
         // ingredients
         apiR.register("GET",    "^/ingredients$",                  (ex,m) -> beans.ingredientCtl.handleList(ex));
         apiR.register("POST",   "^/ingredients$",                  (ex,m) -> beans.ingredientCtl.handleCreate(ex));

@@ -59,51 +59,6 @@ public class PizzaService {
         var allowed     = ingredientDao.findByIds(allowedIds);
         return new PizzaDetails(pizza, ingredients, allowed);
     }
-
-    // ===== Full-replace composition helpers =====
-    public void replaceBaseIngredients(int pizzaId, List<Integer> newIds, boolean requireSubsetOfAllowed) {
-        ensurePizzaExists(pizzaId);
-        validateIngredientsExist(newIds);
-
-        if (requireSubsetOfAllowed) {
-            var allowed = new HashSet<>(allowedDao.findIngredientIdsByPizzaId(pizzaId));
-            if (!allowed.containsAll(newIds)) {
-                throw new IllegalArgumentException("base_ingredients_must_be_subset_of_allowed");
-            }
-        }
-
-        var current = new HashSet<>(pizzaIngredientDao.findIngredientIdsByPizzaId(pizzaId));
-        var target  = new HashSet<>(newIds);
-
-        // add missing
-        for (Integer add : diff(target, current)) pizzaIngredientDao.add(pizzaId, add);
-        // remove extra
-        for (Integer rem : diff(current, target)) pizzaIngredientDao.remove(pizzaId, rem);
-    }
-
-    public void replaceAllowedIngredients(int pizzaId, List<Integer> newIds, boolean enforceSupersetOfBase) {
-        ensurePizzaExists(pizzaId);
-        validateIngredientsExist(newIds);
-
-        var current = new HashSet<>(allowedDao.findIngredientIdsByPizzaId(pizzaId));
-        var target  = new HashSet<>(newIds);
-
-        for (Integer add : diff(target, current)) allowedDao.allow(pizzaId, add);
-        for (Integer rem : diff(current, target)) allowedDao.disallow(pizzaId, rem);
-
-        if (enforceSupersetOfBase) {
-            var base = new HashSet<>(pizzaIngredientDao.findIngredientIdsByPizzaId(pizzaId));
-            if (!target.containsAll(base)) {
-                throw new IllegalArgumentException("allowed_must_include_all_base_ingredients");
-            }
-        }
-    }
-
-    private void validateIngredientsExist(List<Integer> ids) {
-        if (ids == null) return;
-        var found = ingredientDao.findByIds(ids).stream().map(Ingredient::getId).collect(Collectors.toSet());
-        for (Integer id : ids) if (!found.contains(id)) throw new NotFoundException("ingredient_"+id+"_not_found");
-    }
     private void ensurePizzaExists(int id) {
         if (pizzaDao.findById(id) == null) throw new NotFoundException("pizza_not_found");
     }
