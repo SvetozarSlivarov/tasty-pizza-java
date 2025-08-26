@@ -69,4 +69,59 @@ public class PizzaController {
         try { pizzas.delete(id); HttpUtils.sendStatus(ex, 204); }
         catch (Exception e) { HttpUtils.sendJson(ex, 404, Map.of("error","not_found")); }
     }
+    public void handleIngredientsList(com.sun.net.httpserver.HttpExchange ex, int pizzaId) throws java.io.IOException {
+        HttpUtils.requireMethod(ex, "GET");
+        List<PizzaIngredientView> list = pizzas.listPizzaIngredientsView(pizzaId);
+        HttpUtils.sendJson(ex, 200, list);
+    }
+
+    public void handleIngredientAdd(com.sun.net.httpserver.HttpExchange ex, int pizzaId) throws java.io.IOException {
+        HttpUtils.requireMethod(ex, "POST");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+        PizzaIngredientAddRequest req = JsonUtil.fromJson(HttpUtils.readBody(ex), PizzaIngredientAddRequest.class);
+        boolean ok = pizzas.addIngredientToPizza(pizzaId, req.ingredientId(), req.isRemovable());
+        if (ok) HttpUtils.sendStatus(ex, 201);
+        else HttpUtils.sendJson(ex, 400, Map.of("error","cannot_add"));
+    }
+
+    public void handleIngredientUpdate(com.sun.net.httpserver.HttpExchange ex, int pizzaId, int ingredientId) throws java.io.IOException {
+        HttpUtils.requireMethod(ex, "PATCH");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+        PizzaIngredientUpdateRequest req = JsonUtil.fromJson(HttpUtils.readBody(ex), PizzaIngredientUpdateRequest.class);
+        boolean ok = pizzas.updateIngredientRemovability(pizzaId, ingredientId, req.isRemovable());
+        if (ok) HttpUtils.sendStatus(ex, 204);
+        else HttpUtils.sendJson(ex, 400, Map.of("error","cannot_update"));
+    }
+
+    public void handleIngredientDelete(com.sun.net.httpserver.HttpExchange ex, int pizzaId, int ingredientId) throws java.io.IOException {
+        HttpUtils.requireMethod(ex, "DELETE");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+        boolean ok = pizzas.removeIngredientFromPizza(pizzaId, ingredientId);
+        if (ok) HttpUtils.sendStatus(ex, 204);
+        else HttpUtils.sendJson(ex, 400, Map.of("error","cannot_delete"));
+    }
+
+
+    public void handleAllowedList(com.sun.net.httpserver.HttpExchange ex, int pizzaId) throws java.io.IOException {
+        HttpUtils.requireMethod(ex, "GET");
+        var allowed = pizzas.listAllowedIngredients(pizzaId);
+        HttpUtils.sendJson(ex, 200, allowed);
+    }
+
+    public void handleAllowedAdd(com.sun.net.httpserver.HttpExchange ex, int pizzaId) throws java.io.IOException {
+        HttpUtils.requireMethod(ex, "POST");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+        PizzaAllowedAddRequest req = JsonUtil.fromJson(HttpUtils.readBody(ex), PizzaAllowedAddRequest.class);
+        boolean ok = pizzas.allowIngredientForPizza(pizzaId, req.ingredientId());
+        if (ok) HttpUtils.sendStatus(ex, 201);
+        else HttpUtils.sendJson(ex, 400, Map.of("error","cannot_allow"));
+    }
+
+    public void handleAllowedDelete(com.sun.net.httpserver.HttpExchange ex, int pizzaId, int ingredientId) throws java.io.IOException {
+        HttpUtils.requireMethod(ex, "DELETE");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+        boolean ok = pizzas.disallowIngredientForPizza(pizzaId, ingredientId);
+        if (ok) HttpUtils.sendStatus(ex, 204);
+        else HttpUtils.sendJson(ex, 400, Map.of("error","cannot_disallow"));
+    }
 }

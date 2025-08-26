@@ -95,12 +95,13 @@ public class SchemaBuilder {
     private static void createPizzaIngredientsTable(Statement stmt) throws SQLException {
         String sql = """
             CREATE TABLE IF NOT EXISTS pizza_ingredients (
-                pizza_id INT,
-                ingredient_id INT,
-                PRIMARY KEY (pizza_id, ingredient_id),
-                FOREIGN KEY (pizza_id) REFERENCES pizzas(id),
-                FOREIGN KEY (ingredient_id) REFERENCES ingredients(id)
-            )
+                         pizza_id INT,
+                         ingredient_id INT,
+                         is_removable BOOLEAN NOT NULL DEFAULT TRUE,
+                         PRIMARY KEY (pizza_id, ingredient_id),
+                         FOREIGN KEY (pizza_id) REFERENCES pizzas(id),
+                         FOREIGN KEY (ingredient_id) REFERENCES ingredients(id)
+                     )
         """;
         stmt.executeUpdate(sql);
     }

@@ -29,12 +29,23 @@ public class RouteRegistrar {
         apiR.register("GET",    "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleGet(ex, Integer.parseInt(m.group(1))));
         apiR.register("PATCH",  "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleUpdate(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleDelete(ex, Integer.parseInt(m.group(1))));
+
+        // pizza base ingredients (public GET; admin POST/PATCH/DELETE)
+        apiR.register("GET",    "^/pizzas/(\\d+)/ingredients$",                         (ex,m) -> beans.pizzaCtl.handleIngredientsList(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST",   "^/pizzas/(\\d+)/ingredients$",                         (ex,m) -> beans.pizzaCtl.handleIngredientAdd(ex, Integer.parseInt(m.group(1))));
+        apiR.register("PATCH",  "^/pizzas/(\\d+)/ingredients/(\\d+)$",                  (ex,m) -> beans.pizzaCtl.handleIngredientUpdate(ex, Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))));
+        apiR.register("DELETE", "^/pizzas/(\\d+)/ingredients/(\\d+)$",                  (ex,m) -> beans.pizzaCtl.handleIngredientDelete(ex, Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))));
+
+// pizza allowed ingredients (public GET; admin POST/DELETE)
+        apiR.register("GET",    "^/pizzas/(\\d+)/allowed-ingredients$",                 (ex,m) -> beans.pizzaCtl.handleAllowedList(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST",   "^/pizzas/(\\d+)/allowed-ingredients$",                 (ex,m) -> beans.pizzaCtl.handleAllowedAdd(ex, Integer.parseInt(m.group(1))));
+        apiR.register("DELETE", "^/pizzas/(\\d+)/allowed-ingredients/(\\d+)$",          (ex,m) -> beans.pizzaCtl.handleAllowedDelete(ex, Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))));
         // ingredients
         apiR.register("GET",    "^/ingredients$",                  (ex,m) -> beans.ingredientCtl.handleList(ex));
         apiR.register("POST",   "^/ingredients$",                  (ex,m) -> beans.ingredientCtl.handleCreate(ex));
         apiR.register("PATCH",  "^/ingredients/(\\d+)$",           (ex,m) -> beans.ingredientCtl.handleUpdate(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/ingredients/(\\d+)$",           (ex,m) -> beans.ingredientCtl.handleDelete(ex, Integer.parseInt(m.group(1))));
-        // ingredient-types (новите)
+        // ingredient-types
         apiR.register("GET",    "^/ingredient-types$",             (ex,m) -> beans.ingredientTypeCtl.handleList(ex));
         apiR.register("POST",   "^/ingredient-types$",             (ex,m) -> beans.ingredientTypeCtl.handleCreate(ex));
         apiR.register("PATCH",  "^/ingredient-types/(\\d+)$",      (ex,m) -> beans.ingredientTypeCtl.handleUpdate(ex, Integer.parseInt(m.group(1))));

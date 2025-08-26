@@ -1,6 +1,8 @@
 package com.example.dao.impl;
 
 import com.example.dao.PizzaAllowedIngredientDao;
+import com.example.dao.PizzaDao;
+import com.example.dao.IngredientDao;
 import com.example.dao.base.AbstractDao;
 
 import java.sql.SQLException;
@@ -8,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PizzaAllowedIngredientDaoImpl extends AbstractDao implements PizzaAllowedIngredientDao {
+    private final PizzaDao pizzaDao = new PizzaDaoImpl();
+    private final IngredientDao ingredientDao = new IngredientDaoImpl();
 
     @Override
     public List<Integer> findIngredientIdsByPizzaId(int pizzaId) {
@@ -18,7 +22,18 @@ public class PizzaAllowedIngredientDaoImpl extends AbstractDao implements PizzaA
     }
 
     @Override
+    public List<Integer> findPizzaIdsByIngredientId(int ingredientId) {
+        String sql = "SELECT pizza_id FROM pizza_allowed_ingredients WHERE ingredient_id = ?";
+        try {
+            return queryList(sql, ps -> ps.setInt(1, ingredientId), rs -> rs.getInt("pizza_id"));
+        } catch (SQLException e) { e.printStackTrace(); return new ArrayList<>(); }
+    }
+
+    @Override
     public boolean allow(int pizzaId, int ingredientId) {
+        if (pizzaDao.findById(pizzaId) == null) return false;
+        if (ingredientDao.findById(ingredientId) == null) return false;
+
         String sql = "INSERT INTO pizza_allowed_ingredients(pizza_id, ingredient_id) VALUES(?, ?)";
         try {
             return update(sql, ps -> { ps.setInt(1, pizzaId); ps.setInt(2, ingredientId); }) > 0;
