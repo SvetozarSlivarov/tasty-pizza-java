@@ -11,7 +11,7 @@ public class MenuMappers {
     }
 
     public static DrinkResponse toDto(Drink d) {
-        return new DrinkResponse(d.getId(), d.getName(), d.getPrice(), d.isAvailable());
+        return new DrinkResponse(d.getId(), d.getName(),d.getDescription(), d.getPrice(), d.isAvailable());
     }
 
     public static Pizza fromCreate(PizzaCreateRequest r) {
@@ -27,7 +27,7 @@ public class MenuMappers {
         var d = new Drink();
         d.setName(r.name());
         d.setPrice(r.price());
-        d.setAvailable(r.available() == null ? true : r.available());
+        d.setAvailable(r.isAvailable() == null ? true : r.isAvailable());
         return d;
     }
 
@@ -41,6 +41,6 @@ public class MenuMappers {
     public static void applyUpdate(DrinkUpdateRequest r, Drink d) {
         if (r.name() != null) d.setName(r.name());
         if (r.price() != null) d.setPrice(r.price());
-        if (r.available() != null) d.setAvailable(r.available());
+        if (r.isAvailable() != null) d.setAvailable(r.isAvailable());
     }
 }

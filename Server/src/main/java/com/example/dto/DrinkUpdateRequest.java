@@ -5,5 +5,7 @@ import java.math.BigDecimal;
 public record DrinkUpdateRequest(
         String name,
         BigDecimal price,
-        Boolean available
+        String description,
+
+        Boolean isAvailable
 ) {}

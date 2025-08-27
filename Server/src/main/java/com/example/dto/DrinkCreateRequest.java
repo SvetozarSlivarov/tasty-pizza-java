@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public record DrinkCreateRequest(
         String name,
+        String description,
         BigDecimal price,
-        Boolean available
+        Boolean isAvailable
 ) {}

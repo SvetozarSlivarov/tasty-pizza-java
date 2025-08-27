@@ -30,13 +30,20 @@ public class RouteRegistrar {
         apiR.register("PATCH",  "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleUpdate(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleDelete(ex, Integer.parseInt(m.group(1))));
 
+        // DRINKS
+        apiR.register("GET",    "^/drinks$",                (ex,m) -> beans.drinkCtl.handleList(ex));
+        apiR.register("GET",    "^/drinks/(\\d+)$",         (ex,m) -> beans.drinkCtl.handleGet(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST",   "^/drinks$",                (ex,m) -> beans.drinkCtl.handleCreate(ex));                         // ADMIN
+        apiR.register("PATCH",  "^/drinks/(\\d+)$",         (ex,m) -> beans.drinkCtl.handleUpdate(ex, Integer.parseInt(m.group(1)))); // ADMIN
+        apiR.register("DELETE", "^/drinks/(\\d+)$",         (ex,m) -> beans.drinkCtl.handleDelete(ex, Integer.parseInt(m.group(1)))); // ADMIN
+
         // pizza base ingredients (public GET; admin POST/PATCH/DELETE)
         apiR.register("GET",    "^/pizzas/(\\d+)/ingredients$",                         (ex,m) -> beans.pizzaCtl.handleIngredientsList(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST",   "^/pizzas/(\\d+)/ingredients$",                         (ex,m) -> beans.pizzaCtl.handleIngredientAdd(ex, Integer.parseInt(m.group(1))));
         apiR.register("PATCH",  "^/pizzas/(\\d+)/ingredients/(\\d+)$",                  (ex,m) -> beans.pizzaCtl.handleIngredientUpdate(ex, Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))));
         apiR.register("DELETE", "^/pizzas/(\\d+)/ingredients/(\\d+)$",                  (ex,m) -> beans.pizzaCtl.handleIngredientDelete(ex, Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))));
 
-// pizza allowed ingredients (public GET; admin POST/DELETE)
+        // pizza allowed ingredients (public GET; admin POST/DELETE)
         apiR.register("GET",    "^/pizzas/(\\d+)/allowed-ingredients$",                 (ex,m) -> beans.pizzaCtl.handleAllowedList(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST",   "^/pizzas/(\\d+)/allowed-ingredients$",                 (ex,m) -> beans.pizzaCtl.handleAllowedAdd(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/pizzas/(\\d+)/allowed-ingredients/(\\d+)$",          (ex,m) -> beans.pizzaCtl.handleAllowedDelete(ex, Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))));
@@ -53,7 +60,7 @@ public class RouteRegistrar {
         HttpContext api = server.createContext("/api", apiR::handle);
         addFilters(api, cors, access, authOptional);
 
-        // /users
+        // USERS
         var usersR = new ContextRouter();
         usersR.register("GET",    "^/me$",                   (ex,m) -> beans.userCtl.getMe(ex));
         usersR.register("PUT",    "^/me$",                   (ex,m) -> beans.userCtl.updateMe(ex));

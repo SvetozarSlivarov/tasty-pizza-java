@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record DrinkResponse(
         int id,
         String name,
+        String description,
         BigDecimal price,
-        boolean available
+        boolean isAvailable
 ) {}

@@ -103,3 +103,19 @@ WHERE p.name='Veggie' AND i.name='basil';
 INSERT IGNORE INTO pizza_allowed_ingredients(pizza_id, ingredient_id)
 SELECT p.id, i.id FROM pizzas p, ingredients i;
 
+INSERT INTO drinks (name, description, price, is_available) VALUES
+    ('Latte', 'Hot, 250ml', 2.90, TRUE),
+    ('Cappuccino', 'Hot, 250ml', 2.80, TRUE),
+    ('Americano', 'Hot, 250ml', 2.20, TRUE),
+    ('Hot Chocolate', 'Cocoa, 300ml', 2.60, TRUE),
+    ('Lemonade 0.5L', 'Fresh lemon', 2.30, TRUE),
+    ('Iced Tea Peach 0.5L', 'Chilled', 2.40, TRUE),
+    ('Sparkling Water 0.5L', 'Carbonated', 1.60, TRUE),
+    ('Apple Juice 0.33L', '100% juice', 2.10, TRUE),
+    ('Energy Drink 0.25L', 'Classic', 2.90, TRUE),
+    ('Vanilla Milkshake 0.4L', 'Ice cream based', 3.50, TRUE),
+    ('Chocolate Milkshake 0.4L', 'Ice cream based', 3.50, TRUE),
+    ('Ginger Ale 0.33L', 'Lightly spicy', 2.20, TRUE),
+    ('Mango Smoothie 0.4L', 'Fruit blend', 3.20, FALSE),
+    ('Strawberry Smoothie 0.4L', 'Fruit blend', 3.20, TRUE),
+    ('Coconut Water 0.33L', 'No added sugar', 2.70, TRUE);
