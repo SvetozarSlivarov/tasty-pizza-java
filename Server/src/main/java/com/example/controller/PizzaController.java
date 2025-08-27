@@ -80,8 +80,12 @@ public class PizzaController {
         HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
         PizzaIngredientAddRequest req = JsonUtil.fromJson(HttpUtils.readBody(ex), PizzaIngredientAddRequest.class);
         boolean ok = pizzas.addIngredientToPizza(pizzaId, req.ingredientId(), req.isRemovable());
-        if (ok) HttpUtils.sendStatus(ex, 201);
-        else HttpUtils.sendJson(ex, 400, Map.of("error","cannot_add"));
+        if (ok) {
+            List<PizzaIngredientView> list = pizzas.listPizzaIngredientsView(pizzaId);
+            HttpUtils.sendJson(ex, 201, list);
+        } else {
+            HttpUtils.sendJson(ex, 400, Map.of("error","cannot_add"));
+        }
     }
 
     public void handleIngredientUpdate(com.sun.net.httpserver.HttpExchange ex, int pizzaId, int ingredientId) throws java.io.IOException {
@@ -89,8 +93,12 @@ public class PizzaController {
         HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
         PizzaIngredientUpdateRequest req = JsonUtil.fromJson(HttpUtils.readBody(ex), PizzaIngredientUpdateRequest.class);
         boolean ok = pizzas.updateIngredientRemovability(pizzaId, ingredientId, req.isRemovable());
-        if (ok) HttpUtils.sendStatus(ex, 204);
-        else HttpUtils.sendJson(ex, 400, Map.of("error","cannot_update"));
+        if (ok){
+            List<PizzaIngredientView> list = pizzas.listPizzaIngredientsView(pizzaId);
+            HttpUtils.sendJson(ex, 204, list);
+        } else {
+            HttpUtils.sendJson(ex, 400, Map.of("error", "cannot_update"));
+        }
     }
 
     public void handleIngredientDelete(com.sun.net.httpserver.HttpExchange ex, int pizzaId, int ingredientId) throws java.io.IOException {

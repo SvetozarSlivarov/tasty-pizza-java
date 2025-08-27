@@ -95,7 +95,28 @@ public final class HttpUtils {
         try { return Integer.parseInt(v); }
         catch (NumberFormatException e) { return null; }
     }
-    private static Map<String, String> parseQuery(HttpExchange ex) {
+    public static UserRole resolveRole(HttpExchange ex, JwtService jwt) {
+        Object attr = ex.getAttribute("userRole");
+        if (attr instanceof UserRole ur) return ur;
+
+        String token = extractBearerToken(ex);
+        if (token != null) {
+            try {
+                return jwt.extractUserRole(token);
+            } catch (Exception ignored) {}
+        }
+        return UserRole.CUSTOMER;
+    }
+    public static String extractBearerToken(HttpExchange ex) {
+        String auth = ex.getRequestHeaders().getFirst("Authorization");
+        if (auth == null) return null;
+        auth = auth.trim();
+        if (auth.regionMatches(true, 0, "Bearer ", 0, 7) && auth.length() > 7) {
+            return auth.substring(7).trim();
+        }
+        return null;
+    }
+    public static Map<String, String> parseQuery(HttpExchange ex) {
         Map<String, String> result = new HashMap<>();
         String query = ex.getRequestURI().getRawQuery();
         if (query == null || query.isEmpty()) return result;
