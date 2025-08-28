@@ -12,18 +12,20 @@ import java.util.List;
 public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
     @Override
     public Drink findById(int id) {
-        String sql = "SELECT * FROM drinks WHERE id=?";
+        String sql = "SELECT p.id, p.name, p.description, p.base_price AS price, p.is_available " +
+                "FROM drinks d JOIN products p ON p.id = d.product_id WHERE d.product_id=? AND p.type='drink'";
         try {
-            return queryOne(sql, preparedStatement -> preparedStatement.setInt(1, id), this::map);
-        } catch (SQLException e)
-        { e.printStackTrace();
+            return queryOne(sql, ps -> ps.setInt(1, id), this::map);
+        } catch (SQLException e) {
+            e.printStackTrace();
             return null;
         }
     }
 
     @Override
     public List<Drink> findAll() {
-        String sql = "SELECT * FROM drinks ORDER BY id";
+        String sql = "SELECT p.id, p.name, p.description, p.base_price AS price, p.is_available " +
+                "FROM drinks d JOIN products p ON p.id = d.product_id WHERE p.type='drink'";
         try {
             return queryList(sql, null, this::map);
         } catch (SQLException e) {
@@ -31,9 +33,12 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
             return new ArrayList<>();
         }
     }
+
     @Override
     public List<Drink> findAvailable() {
-        String sql = "SELECT * FROM drinks WHERE is_available = true";
+        String sql = "SELECT p.id, p.name, p.description, p.base_price AS price, p.is_available " +
+                "FROM drinks d JOIN products p ON p.id = d.product_id " +
+                "WHERE p.type='drink' AND p.is_available=TRUE";
         try {
             return queryList(sql, null, this::map);
         } catch (SQLException e) {
@@ -44,15 +49,22 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
 
     @Override
     public Drink save(Drink drink) {
-        String sql = "INSERT INTO drinks(name, description, price, is_available) VALUES(?,?,?,?)";
         try {
-            int id = updateReturningId(sql, ps -> {
+            // 1) insert into products
+            String insProduct = "INSERT INTO products(type, name, description, base_price, is_available) " +
+                    "VALUES ('drink', ?, ?, ?, ?)";
+            int id = updateReturningId(insProduct, ps -> {
                 ps.setString(1, drink.getName());
                 ps.setString(2, drink.getDescription());
                 ps.setBigDecimal(3, drink.getPrice());
                 ps.setBoolean(4, drink.isAvailable());
             });
             if (id <= 0) return null;
+
+            // 2) marker row in drinks
+            String insDrink = "INSERT INTO drinks(product_id) VALUES (?)";
+            update(insDrink, ps -> ps.setInt(1, id));
+
             drink.setId(id);
             return drink;
         } catch (SQLException e) {
@@ -63,7 +75,7 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
 
     @Override
     public Drink update(Drink drink) {
-        String sql = "UPDATE drinks SET name=?, description=?, price=?, is_available=? WHERE id=?";
+        String sql = "UPDATE products SET name=?, description=?, base_price=?, is_available=? WHERE id=? AND type='drink'";
         try {
             int rows = update(sql, ps -> {
                 ps.setString(1, drink.getName());
@@ -81,11 +93,11 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
 
     @Override
     public Drink delete(int id) {
+        Drink existing = findById(id);
+        if (existing == null) return null;
         try {
-            Drink existing = findById(id);
-            if (existing == null) return null;
-            String sql = "DELETE FROM drinks WHERE id=?";
-            int rows = update(sql, ps -> ps.setInt(1, id));
+            // Deleting from products will cascade to drinks via FK ON DELETE CASCADE
+            int rows = update("DELETE FROM products WHERE id=? AND type='drink'", ps -> ps.setInt(1, id));
             return rows > 0 ? existing : null;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -93,13 +105,13 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
         }
     }
 
-    private Drink map(ResultSet resultSet) throws SQLException {
-        Drink drink = new Drink();
-        drink.setId(resultSet.getInt("id"));
-        drink.setName(resultSet.getString("name"));
-        drink.setDescription(resultSet.getString("description"));
-        drink.setPrice(resultSet.getBigDecimal("price"));
-        drink.setAvailable(resultSet.getBoolean("is_available"));
-        return drink;
+    private Drink map(ResultSet rs) throws SQLException {
+        Drink d = new Drink();
+        d.setId(rs.getInt("id"));
+        d.setName(rs.getString("name"));
+        d.setDescription(rs.getString("description"));
+        d.setPrice(rs.getBigDecimal("price"));
+        d.setAvailable(rs.getBoolean("is_available"));
+        return d;
     }
 }
