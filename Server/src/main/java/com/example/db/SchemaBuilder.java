@@ -12,18 +12,24 @@ public class SchemaBuilder {
 
             createUsersTable(stmt);
             createProductsTable(stmt);
+
+            // marker субтипове
             createPizzasTable(stmt);
             createDrinksTable(stmt);
+
+            // вариации за пиците
+            createPizzaVariantsTable(stmt);
+
             createIngredientTypesTable(stmt);
             createIngredientsTable(stmt);
-            createPizzaIngredientsTable(stmt);
-            createPizzaAllowedIngredientsTable(stmt);
+            createPizzaIngredientsTable(stmt);          // default toppings
+            createPizzaAllowedIngredientsTable(stmt);   // allowed extras
+
             createOrdersTable(stmt);
-            createOrderItemsTable(stmt);
+            createOrderItemsTable(stmt);                // с опционален pizza_variant_id
             createOrderItemCustomizationsTable(stmt);
 
             System.out.println("All tables created or already exist.");
-
         } catch (SQLException e) {
             System.err.println("Error while creating tables:");
             e.printStackTrace();
@@ -59,11 +65,12 @@ public class SchemaBuilder {
         stmt.executeUpdate(sql);
     }
 
-    // Marker tables to denote product subtype; keep compatibility with existing DAOs/DTOs
+    // Маркерни таблици (само PK/FK към products)
     private static void createPizzasTable(Statement stmt) throws SQLException {
         String sql = """
             CREATE TABLE IF NOT EXISTS pizzas (
                 product_id INT PRIMARY KEY,
+                spicy_level  ENUM('mild','medium','hot') NOT NULL,
                 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
             )
         """;
@@ -75,6 +82,21 @@ public class SchemaBuilder {
             CREATE TABLE IF NOT EXISTS drinks (
                 product_id INT PRIMARY KEY,
                 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+            )
+        """;
+        stmt.executeUpdate(sql);
+    }
+
+    private static void createPizzaVariantsTable(Statement stmt) throws SQLException {
+        String sql = """
+            CREATE TABLE IF NOT EXISTS pizza_variants (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                pizza_id INT NOT NULL,                                -- FK към pizzas(product_id)
+                size ENUM('small','medium','large') NOT NULL,
+                dough ENUM('thin','classic','wholegrain') NOT NULL,
+                extra_price DECIMAL(8,2) NOT NULL DEFAULT 0.00,       -- добавка към base_price
+                UNIQUE (pizza_id, size, dough),
+                FOREIGN KEY (pizza_id) REFERENCES pizzas(product_id) ON DELETE CASCADE
             )
         """;
         stmt.executeUpdate(sql);
@@ -134,7 +156,7 @@ public class SchemaBuilder {
             CREATE TABLE IF NOT EXISTS orders (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 user_id INT,
-                status ENUM('pending', 'preparing', 'delivered', 'cancelled') NOT NULL,
+                status ENUM('pending','preparing','delivered','cancelled') NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )
@@ -147,13 +169,15 @@ public class SchemaBuilder {
             CREATE TABLE IF NOT EXISTS order_items (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 order_id INT NOT NULL,
-                product_id INT NOT NULL,
-                product_type ENUM('pizza','drink') NOT NULL, -- kept for compatibility
+                product_id INT NOT NULL,                               -- FK към products
+                product_type ENUM('pizza','drink') NOT NULL,           -- за съвместимост за сега
+                pizza_variant_id INT NULL,                             -- ако е пица и е избрана вариация
                 quantity INT NOT NULL,
-                unit_price DECIMAL(8,2) NOT NULL,
+                unit_price DECIMAL(8,2) NOT NULL,                      -- крайна единична цена (base + extra)
                 note TEXT,
                 FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-                FOREIGN KEY (product_id) REFERENCES products(id)
+                FOREIGN KEY (product_id) REFERENCES products(id),
+                FOREIGN KEY (pizza_variant_id) REFERENCES pizza_variants(id) ON DELETE SET NULL
             )
         """;
         stmt.executeUpdate(sql);
@@ -165,7 +189,7 @@ public class SchemaBuilder {
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 order_item_id INT NOT NULL,
                 ingredient_id INT NOT NULL,
-                action ENUM('add', 'remove') NOT NULL,
+                action ENUM('add','remove') NOT NULL,
                 FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE CASCADE,
                 FOREIGN KEY (ingredient_id) REFERENCES ingredients(id)
             )

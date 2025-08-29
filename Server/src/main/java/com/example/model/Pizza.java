@@ -1,6 +1,8 @@
 package com.example.model;
 
+import com.example.model.enums.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class Pizza {
     private int id;
@@ -8,6 +10,10 @@ public class Pizza {
     private String description;
     private BigDecimal basePrice;
     private boolean isAvailable;
+
+    private SpicyLevel spicyLevel;
+
+    private List<PizzaVariant> variants;
 
     public Pizza() {}
 
@@ -18,53 +24,26 @@ public class Pizza {
         this.isAvailable = isAvailable;
     }
 
-    public Pizza(int id, String name, String description, BigDecimal basePrice, boolean isAvailable) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.basePrice = basePrice;
-        this.isAvailable = isAvailable;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public int getId() {
-        return id;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public String getName() {
-        return name;
-    }
+    public BigDecimal getPrice() { return basePrice; }
+    public void setPrice(BigDecimal basePrice) { this.basePrice = basePrice; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public boolean isAvailable() { return isAvailable; }
+    public void setAvailable(boolean available) { isAvailable = available; }
 
-    public String getDescription() {
-        return description;
-    }
+    public SpicyLevel getSpicyLevel() { return spicyLevel; }
+    public void setSpicyLevel(SpicyLevel spicyLevel) { this.spicyLevel = spicyLevel; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getPrice() {
-        return basePrice;
-    }
-
-    public void setPrice(BigDecimal basePrice) {
-        this.basePrice = basePrice;
-    }
-
-    public boolean isAvailable() {
-        return isAvailable;
-    }
-
-    public void setAvailable(boolean available) {
-        isAvailable = available;
-    }
+    public List<PizzaVariant> getVariants() { return variants; }
+    public void setVariants(List<PizzaVariant> variants) { this.variants = variants; }
 
     @Override
     public String toString() {
@@ -74,6 +53,8 @@ public class Pizza {
                 ", description='" + description + '\'' +
                 ", basePrice=" + basePrice +
                 ", isAvailable=" + isAvailable +
+                ", spicyLevel=" + spicyLevel +
+                ", variants=" + (variants != null ? variants.size() : 0) +
                 '}';
     }
 }

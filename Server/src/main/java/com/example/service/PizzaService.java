@@ -1,138 +1,103 @@
 package com.example.service;
 
-import com.example.dao.*;
-import com.example.dao.impl.*;
-import com.example.dto.*;
+import com.example.dao.IngredientDao;
+import com.example.dao.PizzaDao;
+import com.example.dao.PizzaIngredientDao;
+import com.example.dao.PizzaVariantDao;
+import com.example.dao.impl.IngredientDaoImpl;
+import com.example.dao.impl.PizzaDaoImpl;
+import com.example.dao.impl.PizzaIngredientDaoImpl;
+import com.example.dao.impl.PizzaVariantDaoImpl;
+import com.example.dto.PizzaDto;
 import com.example.exception.NotFoundException;
 import com.example.model.Ingredient;
-import com.example.model.PizzaIngredient;
+import com.example.utils.mapper.PizzaMapper;
 import com.example.model.Pizza;
-import com.example.dao.impl.PizzaDetails;
-import com.example.model.enums.UserRole;
-import com.example.utils.mapper.MenuMappers;
+import com.example.model.PizzaVariant;
+import com.example.dto.PizzaIngredientView;
+import com.example.dto.IngredientTypeView;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class PizzaService {
+
     private final PizzaDao pizzaDao = new PizzaDaoImpl();
-    private final IngredientDao ingredientDao = new IngredientDaoImpl();
-    private final PizzaIngredientDao pizzaIngredientDao = new PizzaIngredientDaoImpl();
-    private final PizzaAllowedIngredientDao allowedDao = new PizzaAllowedIngredientDaoImpl();
+    private final PizzaVariantDao variantDao = new PizzaVariantDaoImpl();
 
-    // ===== Pizzas =====
-    public List<Pizza> findAll(boolean availableOnly, UserRole role) {
-        if (availableOnly || role != UserRole.ADMIN) return pizzaDao.findAvailable();
-        return pizzaDao.findAll();
-    }
 
-    public Pizza create(PizzaCreateRequest req) {
-        Pizza p = new Pizza(req.name(), req.description(), req.price(), Boolean.TRUE.equals(req.available()));
-        return pizzaDao.save(p);
-    }
 
-    public Pizza update(int id, PizzaUpdateRequest req) {
+    public PizzaDto get(int id, boolean withVariants) throws NotFoundException {
         Pizza p = pizzaDao.findById(id);
         if (p == null) throw new NotFoundException("pizza_not_found");
-        MenuMappers.applyUpdate(req, p);
-        return pizzaDao.update(p);
+        if (withVariants) p.setVariants(variantDao.findByPizzaId(id));
+        return PizzaMapper.toDto(p);
     }
 
-    public void delete(int id) {
-        var baseIds = pizzaIngredientDao.findIngredientIdsByPizzaId(id);
-        for (Integer ingId : baseIds) pizzaIngredientDao.remove(id, ingId);
-        var allowIds = allowedDao.findIngredientIdsByPizzaId(id);
-        for (Integer ingId : allowIds) allowedDao.disallow(id, ingId);
+
+    public List<PizzaDto> list(boolean onlyAvailable, boolean withVariants) {
+        List<Pizza> pizzas = onlyAvailable ? pizzaDao.findAvailable() : pizzaDao.findAll();
+        if (withVariants) {
+            for (Pizza p : pizzas) {
+                p.setVariants(variantDao.findByPizzaId(p.getId()));
+            }
+        }
+        return pizzas.stream().map(PizzaMapper::toDto).collect(Collectors.toList());
+    }
+
+
+    public PizzaDto create(PizzaDto dto) {
+        if (dto == null) throw new IllegalArgumentException("PizzaDto is null");
+        if (dto.id() != null) throw new IllegalArgumentException("New pizza must not have id");
+
+        Pizza toSave = PizzaMapper.fromDto(dto);
+        Pizza saved = pizzaDao.save(toSave);
+        if (saved == null) throw new RuntimeException("pizza_create_failed");
+
+        if (dto.variants() != null && !dto.variants().isEmpty()) {
+            List<PizzaVariant> variants = PizzaMapper.variantsFromDto(dto.variants(), saved.getId());
+            for (PizzaVariant v : variants) {
+                if (variantDao.save(v) == null) {
+                    pizzaDao.delete(saved.getId());
+                    throw new RuntimeException("pizza_variant_create_failed");
+                }
+            }
+        }
+
+        saved.setVariants(variantDao.findByPizzaId(saved.getId()));
+        return PizzaMapper.toDto(saved);
+    }
+
+
+    public PizzaDto update(PizzaDto dto) {
+        if (dto == null || dto.id() == null) throw new IllegalArgumentException("PizzaDto.id is required");
+
+        Pizza existing = pizzaDao.findById(dto.id());
+        if (existing == null) throw new NotFoundException("pizza_not_found");
+
+        Pizza toUpdate = PizzaMapper.fromDto(dto);
+        Pizza updated = pizzaDao.update(toUpdate);
+        if (updated == null) throw new RuntimeException("pizza_update_failed");
+
+        if (dto.variants() != null) {
+            variantDao.deleteAllByPizzaId(dto.id());
+            List<PizzaVariant> variants = PizzaMapper.variantsFromDto(dto.variants(), dto.id());
+            for (PizzaVariant v : variants) {
+                if (variantDao.save(v) == null) {
+                    updated.setVariants(variantDao.findByPizzaId(dto.id()));
+                    return PizzaMapper.toDto(updated);
+                }
+            }
+        }
+
+        updated.setVariants(variantDao.findByPizzaId(dto.id()));
+        return PizzaMapper.toDto(updated);
+    }
+
+    public PizzaDto delete(int id) {
         Pizza deleted = pizzaDao.delete(id);
         if (deleted == null) throw new NotFoundException("pizza_not_found");
+        return PizzaMapper.toDto(deleted);
     }
 
-    // ===== Details (pizza + ingredients + allowed) =====
-    public PizzaDetails getDetails(int pizzaId, UserRole role) {
-        Pizza pizza = pizzaDao.findById(pizzaId);
-        if (pizza == null) return null;
-        if (role != UserRole.ADMIN && !pizza.isAvailable()) return null;
-
-        var ingredientIds = pizzaIngredientDao.findIngredientIdsByPizzaId(pizzaId);
-        var allowedIds    = allowedDao.findIngredientIdsByPizzaId(pizzaId);
-
-        var ingredients = ingredientDao.findByIds(ingredientIds);
-        var allowed     = ingredientDao.findByIds(allowedIds);
-        return new PizzaDetails(pizza, ingredients, allowed);
-    }
-    public List<PizzaIngredientView> listPizzaIngredientsView(int pizzaId) {
-        ensurePizzaExists(pizzaId);
-
-        var links = pizzaIngredientDao.findByPizzaId(pizzaId);
-        var ids = links.stream().map(PizzaIngredient::getIngredientId).toList();
-        var ingredients = ingredientDao.findByIds(ids);
-
-        Map<Integer, Ingredient> byId = new HashMap<>();
-        for (var ing : ingredients) byId.put(ing.getId(), ing);
-
-        List<PizzaIngredientView> out = new ArrayList<>();
-        for (var link : links) {
-            var ing = byId.get(link.getIngredientId());
-            String name = ing != null ? ing.getName() : null;
-            IngredientTypeView typeDto = null;
-            if (ing != null && ing.getType() != null) {
-                typeDto = new IngredientTypeView(ing.getType().getId(), ing.getType().getName());
-            }
-            out.add(new PizzaIngredientView(link.getIngredientId(), name, typeDto, link.isRemovable()));
-        }
-        return out;
-    }
-
-    public boolean addIngredientToPizza(int pizzaId, int ingredientId, boolean isRemovable) {
-        ensurePizzaExists(pizzaId);
-        if (ingredientDao.findById(ingredientId) == null) throw new NotFoundException("ingredient_not_found");
-        return pizzaIngredientDao.add(pizzaId, ingredientId, isRemovable);
-    }
-
-    public boolean updateIngredientRemovability(int pizzaId, int ingredientId, boolean isRemovable) {
-        ensurePizzaExists(pizzaId);
-        if (ingredientDao.findById(ingredientId) == null) throw new NotFoundException("ingredient_not_found");
-        return pizzaIngredientDao.updateIsRemovable(pizzaId, ingredientId, isRemovable);
-    }
-
-    public boolean removeIngredientFromPizza(int pizzaId, int ingredientId) {
-        ensurePizzaExists(pizzaId);
-        if (ingredientDao.findById(ingredientId) == null) throw new NotFoundException("ingredient_not_found");
-        return pizzaIngredientDao.remove(pizzaId, ingredientId);
-    }
-
-    public List<PizzaIngredient> listPizzaIngredients(int pizzaId) {
-        ensurePizzaExists(pizzaId);
-        return pizzaIngredientDao.findByPizzaId(pizzaId);
-    }
-
-    public List<Ingredient> listAllowedIngredients(int pizzaId) {
-        ensurePizzaExists(pizzaId);
-        var allowedIds = allowedDao.findIngredientIdsByPizzaId(pizzaId);
-        return ingredientDao.findByIds(allowedIds);
-    }
-
-    public boolean allowIngredientForPizza(int pizzaId, int ingredientId) {
-        ensurePizzaExists(pizzaId);
-        if (ingredientDao.findById(ingredientId) == null) throw new NotFoundException("ingredient_not_found");
-        return allowedDao.allow(pizzaId, ingredientId);
-    }
-
-    public boolean disallowIngredientForPizza(int pizzaId, int ingredientId) {
-        ensurePizzaExists(pizzaId);
-        if (ingredientDao.findById(ingredientId) == null) throw new NotFoundException("ingredient_not_found");
-        return allowedDao.disallow(pizzaId, ingredientId);
-    }
-
-    public boolean isIngredientRemovableForPizza(int pizzaId, int ingredientId) {
-        ensurePizzaExists(pizzaId);
-        return pizzaIngredientDao.findByPizzaId(pizzaId).stream()
-                .anyMatch(pi -> pi.getIngredientId() == ingredientId && pi.isRemovable());
-    }
-    private void ensurePizzaExists(int id) {
-        if (pizzaDao.findById(id) == null) throw new NotFoundException("pizza_not_found");
-    }
-    private static <T> Set<T> diff(Set<T> a, Set<T> b) {
-        var s = new HashSet<>(a); s.removeAll(b); return s;
-    }
 }

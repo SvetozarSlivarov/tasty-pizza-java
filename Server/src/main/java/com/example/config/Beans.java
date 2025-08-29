@@ -10,6 +10,8 @@ public class Beans {
     public final PizzaService pizzas = new PizzaService();
     public final IngredientService ingredients = new IngredientService();
 
+    public final PizzaIngredientService pizzaIngredient = new PizzaIngredientService();
+
     public final DrinkService drinks = new DrinkService();
 
     public final AuthController authCtl;
@@ -23,7 +25,7 @@ public class Beans {
         this.jwt = new JwtService(cfg.jwtBase64Secret(), cfg.jwtTtlSeconds());
         this.authCtl = new AuthController(users, jwt);
         this.userCtl = new UserController(users);
-        this.pizzaCtl = new PizzaController(pizzas, jwt);
+        this.pizzaCtl = new PizzaController(pizzas, pizzaIngredient ,jwt);
         this.ingredientCtl = new IngredientController(ingredients, jwt);
         this.ingredientTypeCtl = new IngredientTypeController(ingredients, jwt);
         this.drinkCtl = new DrinkController(drinks, jwt);
