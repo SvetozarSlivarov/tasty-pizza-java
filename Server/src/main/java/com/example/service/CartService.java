@@ -1,0 +1,156 @@
+package com.example.service;
+
+import com.example.dao.*;
+import com.example.dao.impl.*;
+import com.example.model.*;
+
+import com.example.model.enums.CustomizationAction;
+import com.example.model.enums.OrderStatus;
+import com.example.dto.*;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+public class CartService{
+    private final OrderDao orderDao = new OrderDaoImpl();
+    private final OrderItemDao itemDao = new OrderItemDaoImpl();
+    private final OrderItemCustomizationDao custDao = new OrderItemCustomizationDaoImpl();
+
+    private final PizzaDao pizzaDao = new PizzaDaoImpl();
+    private final DrinkDao drinkDao = new DrinkDaoImpl();
+    private final PizzaVariantDao variantDao = new PizzaVariantDaoImpl();
+    private final PizzaIngredientDao pizzaIngredientDao = new PizzaIngredientDaoImpl();
+    private final PizzaAllowedIngredientDao allowedDao = new PizzaAllowedIngredientDaoImpl();
+
+    public int ensureCart(Integer userId, Integer cartIdHint) {
+        if (cartIdHint != null) {
+            var o = orderDao.findById(cartIdHint);
+            if (o != null && o.getStatus() == OrderStatus.PENDING) return o.getId();
+        }
+        if (userId != null && userId > 0) {
+            for (var o : orderDao.findByUserId(userId))
+                if (o.getStatus() == OrderStatus.PENDING) return o.getId();
+            var created = new Order(userId, OrderStatus.PENDING);
+            orderDao.save(created);
+            return created.getId();
+        }
+
+        var created = new Order(null, OrderStatus.PENDING);
+        orderDao.save(created);
+        return created.getId();
+    }
+
+    public CartView getCart(int orderId) {
+        var o = orderDao.findById(orderId);
+        if (o == null) throw new IllegalArgumentException("order_not_found");
+        var rows = itemDao.findByOrderId(orderId);
+        var items = new ArrayList<CartItemView>();
+        var total = BigDecimal.ZERO;
+
+        for (var it : rows) {
+            var custs = custDao.findByOrderItemId(it.getId());
+            var cv = new ArrayList<CartCustomizationView>();
+            for (var c : custs) cv.add(new CartCustomizationView(c.getIngredient().getId(), c.getAction().name()));
+            var line = it.getUnitPrice().multiply(BigDecimal.valueOf(it.getQuantity()));
+            total = total.add(line);
+            items.add(new CartItemView(it.getId(), it.getProductId(), it.getPizzaVariantId(),
+                    it.getQuantity(), it.getUnitPrice(), it.getNote(), cv));
+        }
+        return new CartView(o.getId(), o.getStatus().name().toLowerCase(), items, total);
+    }
+    public OrderItem addDrink(int orderId, int productId, int qty, String note) {
+        if (qty <= 0) throw new IllegalArgumentException("qty_invalid");
+        var d = drinkDao.findById(productId);
+        if (d == null) throw new IllegalArgumentException("drink_not_found");
+
+        var oi = baseItem(orderId, productId, null, qty, d.getPrice(), note);
+        if (!itemDao.save(oi)) throw new IllegalStateException("create_failed");
+        return oi;
+    }
+
+    public OrderItem addPizza(int orderId, int productId, Integer variantId, int qty, String note,
+                              List<Integer> removeIds, List<Integer> addIds) {
+        if (qty <= 0) throw new IllegalArgumentException("qty_invalid");
+        var p = pizzaDao.findById(productId);
+        if (p == null) throw new IllegalArgumentException("pizza_not_found");
+
+        BigDecimal unit = p.getPrice();
+        Integer toSet = null;
+        if (variantId != null) {
+            var v = variantDao.findById(variantId);
+            if (v == null || v.getPizzaId() != productId) throw new IllegalArgumentException("variant_invalid");
+            unit = unit.add(v.getExtraPrice());
+            toSet = v.getId();
+        }
+
+        if (removeIds != null && !removeIds.isEmpty()) {
+            var base = pizzaIngredientDao.findByPizzaId(productId);
+            var removable = new java.util.HashMap<Integer, Boolean>();
+            for (var l : base) removable.put(l.getIngredientId(), l.isRemovable());
+            for (Integer ing : removeIds) {
+                Boolean ok = removable.get(ing);
+                if (ok == null) throw new IllegalArgumentException("remove_not_in_base");
+                if (!ok) throw new IllegalArgumentException("remove_not_removable");
+            }
+        }
+        if (addIds != null && !addIds.isEmpty()) {
+            var allowed = new HashSet<>(allowedDao.findIngredientIdsByPizzaId(productId));
+            for (Integer ing : addIds) if (!allowed.contains(ing)) throw new IllegalArgumentException("add_not_allowed");
+        }
+
+        var oi = baseItem(orderId, productId, toSet, qty, unit, note);
+        if (!itemDao.save(oi)) throw new IllegalStateException("create_failed");
+
+        if (removeIds != null) for (Integer ing : removeIds)
+            custDao.add(new OrderCustomization(oi, ingredient(ing), CustomizationAction.REMOVE));
+        if (addIds != null) for (Integer ing : addIds)
+            custDao.add(new OrderCustomization(oi, ingredient(ing), CustomizationAction.ADD));
+        return oi;
+    }
+
+    public void setQuantity(int itemId, int qty) {
+        if (qty <= 0) throw new IllegalArgumentException("qty_invalid");
+        if (!itemDao.updateQuantity(itemId, qty)) throw new IllegalStateException("update_failed");
+    }
+
+    public void setVariant(int itemId, Integer variantId) {
+        var it = itemDao.findById(itemId);
+        if (it == null) throw new IllegalArgumentException("item_not_found");
+        var base = pizzaDao.findById(it.getProductId());
+        if (base == null) throw new IllegalArgumentException("not_a_pizza");
+
+        BigDecimal unit = base.getPrice();
+        Integer toSet = null;
+        if (variantId != null) {
+            var v = variantDao.findById(variantId);
+            if (v == null || v.getPizzaId() != it.getProductId()) throw new IllegalArgumentException("variant_invalid");
+            unit = unit.add(v.getExtraPrice());
+            toSet = v.getId();
+        }
+        if (!((OrderItemDaoImpl)itemDao).updateVariantAndPrice(itemId, toSet, unit))
+            throw new IllegalStateException("update_failed");
+    }
+
+    public void setNote(int itemId, String note) {
+        if (!((OrderItemDaoImpl)itemDao).updateNote(itemId, note))
+            throw new IllegalStateException("update_failed");
+    }
+
+    public void removeItem(int itemId) {
+        if (!itemDao.delete(itemId)) throw new IllegalStateException("delete_failed");
+    }
+
+    public void checkout(int orderId) {
+        if (!orderDao.updateStatus(orderId, "preparing"))
+            throw new IllegalStateException("cannot_checkout");
+    }
+
+    private static OrderItem baseItem(int orderId, int productId, Integer variantId,
+                                      int qty, BigDecimal unit, String note) {
+        Order o = new Order(); o.setId(orderId);
+        return new OrderItem(o, productId, variantId, qty, unit, note);
+    }
+    private static Ingredient ingredient(int id){ var i=new Ingredient(); i.setId(id); return i; }
+}

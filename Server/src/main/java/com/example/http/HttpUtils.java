@@ -12,6 +12,7 @@ import java.io.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class HttpUtils {
@@ -75,6 +76,37 @@ public final class HttpUtils {
         } catch (Exception e) {
             return fallback;
         }
+    }
+    public static Integer tryGetUserId(HttpExchange ex, JwtService jwt) {
+        String auth = ex.getRequestHeaders().getFirst("Authorization");
+        if (auth == null || !auth.startsWith("Bearer ")) {
+            return null;
+        }
+        String token = auth.substring("Bearer ".length()).trim();
+        try {
+            return jwt.verifyAndGetUserId(token);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    public static Integer tryGetCookieInt(HttpExchange ex, String name) {
+        List<String> cookies = ex.getRequestHeaders().get("Cookie");
+        if (cookies == null) return null;
+
+        for (String header : cookies) {
+            String[] parts = header.split(";");
+            for (String part : parts) {
+                String[] kv = part.trim().split("=", 2);
+                if (kv.length == 2 && kv[0].equals(name)) {
+                    try {
+                        return Integer.parseInt(kv[1]);
+                    } catch (NumberFormatException ignored) {
+                        return null;
+                    }
+                }
+            }
+        }
+        return null;
     }
     public static void notFound(HttpExchange ex) throws IOException {
         sendJson(ex, 404, Map.of("error", "not_found"));

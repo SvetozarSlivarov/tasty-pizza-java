@@ -47,11 +47,13 @@ public class RouteRegistrar {
         apiR.register("GET",    "^/pizzas/(\\d+)/allowed-ingredients$",                 (ex,m) -> beans.pizzaCtl.handleAllowedList(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST",   "^/pizzas/(\\d+)/allowed-ingredients$",                 (ex,m) -> beans.pizzaCtl.handleAllowedAdd(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/pizzas/(\\d+)/allowed-ingredients/(\\d+)$",          (ex,m) -> beans.pizzaCtl.handleAllowedDelete(ex, Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2))));
+
         // ingredients
         apiR.register("GET",    "^/ingredients$",                  (ex,m) -> beans.ingredientCtl.handleList(ex));
         apiR.register("POST",   "^/ingredients$",                  (ex,m) -> beans.ingredientCtl.handleCreate(ex));
         apiR.register("PATCH",  "^/ingredients/(\\d+)$",           (ex,m) -> beans.ingredientCtl.handleUpdate(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/ingredients/(\\d+)$",           (ex,m) -> beans.ingredientCtl.handleDelete(ex, Integer.parseInt(m.group(1))));
+
         // ingredient-types
         apiR.register("GET",    "^/ingredient-types$",             (ex,m) -> beans.ingredientTypeCtl.handleList(ex));
         apiR.register("POST",   "^/ingredient-types$",             (ex,m) -> beans.ingredientTypeCtl.handleCreate(ex));
@@ -59,6 +61,14 @@ public class RouteRegistrar {
         apiR.register("DELETE", "^/ingredient-types/(\\d+)$",      (ex,m) -> beans.ingredientTypeCtl.handleDelete(ex, Integer.parseInt(m.group(1))));
         HttpContext api = server.createContext("/api", apiR::handle);
         addFilters(api, cors, access, authOptional);
+
+        // CART
+        apiR.register("GET",    "^/cart$",                    (ex,m) -> beans.cartCtl.handleGet(ex));
+        apiR.register("POST",   "^/cart/items/pizza$",        (ex,m) -> beans.cartCtl.handleAddPizza(ex));
+        apiR.register("POST",   "^/cart/items/drink$",        (ex,m) -> beans.cartCtl.handleAddDrink(ex));
+        apiR.register("PATCH",  "^/cart/items/(\\d+)$",       (ex,m) -> beans.cartCtl.handleUpdateItem(ex, Integer.parseInt(m.group(1))));
+        apiR.register("DELETE", "^/cart/items/(\\d+)$",       (ex,m) -> beans.cartCtl.handleDeleteItem(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST",   "^/cart/checkout$",           (ex,m) -> beans.cartCtl.handleCheckout(ex));
 
         // USERS
         var usersR = new ContextRouter();

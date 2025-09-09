@@ -1,79 +1,53 @@
 package com.example.model;
 
-import com.example.model.enums.ProductType;
+import java.math.BigDecimal;
 
 public class OrderItem {
     private int id;
     private Order order;
-    private ProductType productType;
     private int productId;
+    private Integer pizzaVariantId; // nullable
     private int quantity;
+    private BigDecimal unitPrice;
+    private String note;
 
     public OrderItem() {}
 
-    public OrderItem(Order order, ProductType productType, int productId, int quantity) {
+    public OrderItem(Order order, int productId, Integer pizzaVariantId,
+                     int quantity, BigDecimal unitPrice, String note) {
         this.order = order;
-        this.productType = productType;
         this.productId = productId;
+        this.pizzaVariantId = pizzaVariantId;
         this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.note = note;
     }
 
-    public OrderItem(int id, Order order, ProductType productType, int productId, int quantity) {
-        this.id = id;
-        this.order = order;
-        this.productType = productType;
-        this.productId = productId;
-        this.quantity = quantity;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id){
-        this.id = id;
-    }
-
-    public Order getOrder() {
-        return order;
-    }
-
-    public void setOrder(Order order){
-        this.order = order;
-    }
-
-    public ProductType getProductType() {
-        return productType;
-    }
-
-    public void setProductType(ProductType productType){
-        this.productType = productType;
-    }
-
-    public int getProductId() {
-        return productId;
-    }
-
-    public void setProductId(int productId){
-        this.productId = productId;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity){
-        this.quantity = quantity;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public Order getOrder() { return order; }
+    public void setOrder(Order order) { this.order = order; }
+    public int getProductId() { return productId; }
+    public void setProductId(int productId) { this.productId = productId; }
+    public Integer getPizzaVariantId() { return pizzaVariantId; }
+    public void setPizzaVariantId(Integer pizzaVariantId) { this.pizzaVariantId = pizzaVariantId; }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public BigDecimal getUnitPrice() { return unitPrice; }
+    public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 
     @Override
     public String toString() {
         return "OrderItem{" +
                 "id=" + id +
                 ", orderId=" + (order != null ? order.getId() : "null") +
-                ", productType='" + productType + '\'' +
                 ", productId=" + productId +
+                ", pizzaVariantId=" + pizzaVariantId +
                 ", quantity=" + quantity +
+                ", unitPrice=" + unitPrice +
+                ", note='" + note + '\'' +
                 '}';
     }
 }

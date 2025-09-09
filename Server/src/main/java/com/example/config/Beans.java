@@ -9,10 +9,10 @@ public class Beans {
     public final UserService users = new UserService();
     public final PizzaService pizzas = new PizzaService();
     public final IngredientService ingredients = new IngredientService();
-
     public final PizzaIngredientService pizzaIngredient = new PizzaIngredientService();
-
     public final DrinkService drinks = new DrinkService();
+    public final CartService cartService = new CartService();
+
 
     public final AuthController authCtl;
     public final UserController userCtl;
@@ -20,6 +20,7 @@ public class Beans {
     public final IngredientController ingredientCtl;
     public final IngredientTypeController ingredientTypeCtl;
     public final DrinkController drinkCtl;
+    public final CartController cartCtl;
 
     public Beans(ServerConfig cfg) {
         this.jwt = new JwtService(cfg.jwtBase64Secret(), cfg.jwtTtlSeconds());
@@ -29,5 +30,6 @@ public class Beans {
         this.ingredientCtl = new IngredientController(ingredients, jwt);
         this.ingredientTypeCtl = new IngredientTypeController(ingredients, jwt);
         this.drinkCtl = new DrinkController(drinks, jwt);
+        this.cartCtl = new CartController(cartService, jwt);
     }
 }

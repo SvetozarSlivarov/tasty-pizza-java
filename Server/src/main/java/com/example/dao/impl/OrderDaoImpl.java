@@ -16,9 +16,13 @@ public class OrderDaoImpl extends AbstractDao implements OrderDao {
     public void save(Order order) {
         String sql = "INSERT INTO orders(user_id, status) VALUES(?, ?)";
         try {
-            int id = updateReturningId(sql, preparedStatement -> {
-                preparedStatement.setInt(1, order.getUserId());
-                preparedStatement.setString(2, order.getStatus().name());
+            int id = updateReturningId(sql, ps -> {
+                if (order.getUserId() == null) {
+                    ps.setNull(1, java.sql.Types.INTEGER);
+                } else {
+                    ps.setInt(1, order.getUserId());
+                }
+                ps.setString(2, order.getStatus().name().toLowerCase());
             });
             order.setId(id);
         } catch (SQLException e) {
@@ -77,7 +81,12 @@ public class OrderDaoImpl extends AbstractDao implements OrderDao {
     private Order map(ResultSet resultSet) throws SQLException {
         Order o = new Order();
         o.setId(resultSet.getInt("id"));
-        o.setUserId(resultSet.getInt("user_id"));
+        int uid = resultSet.getInt("user_id");
+        if (resultSet.wasNull()) {
+            o.setUserId(null);
+        } else {
+            o.setUserId(uid);
+        }
         o.setCreatedAt(resultSet.getTimestamp("created_at"));
         o.setStatus(OrderStatus.valueOf(resultSet.getString("status").toUpperCase()));
         return o;

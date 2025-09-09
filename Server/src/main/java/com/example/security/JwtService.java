@@ -64,5 +64,15 @@ public class JwtService {
             return UserRole.CUSTOMER;
         }
     }
+    public int verifyAndGetUserId(String token){
+        var jwt = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token);
+
+        int userId = jwt.getPayload().get("id", Integer.class);
+        return userId;
+    }
+
 
 }

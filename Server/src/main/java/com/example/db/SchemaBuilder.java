@@ -155,7 +155,7 @@ public class SchemaBuilder {
         String sql = """
             CREATE TABLE IF NOT EXISTS orders (
                 id INT PRIMARY KEY AUTO_INCREMENT,
-                user_id INT,
+                user_id INT NULL,
                 status ENUM('pending','preparing','delivered','cancelled') NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id)
@@ -169,11 +169,10 @@ public class SchemaBuilder {
             CREATE TABLE IF NOT EXISTS order_items (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 order_id INT NOT NULL,
-                product_id INT NOT NULL,                               -- FK към products
-                product_type ENUM('pizza','drink') NOT NULL,           -- за съвместимост за сега
-                pizza_variant_id INT NULL,                             -- ако е пица и е избрана вариация
-                quantity INT NOT NULL,
-                unit_price DECIMAL(8,2) NOT NULL,                      -- крайна единична цена (base + extra)
+                product_id INT NOT NULL,
+                pizza_variant_id INT NULL,
+                quantity INT NOT NULL CHECK (quantity > 0),
+                unit_price DECIMAL(8,2) NOT NULL,
                 note TEXT,
                 FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
                 FOREIGN KEY (product_id) REFERENCES products(id),
