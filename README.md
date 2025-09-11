@@ -87,7 +87,6 @@ CRA dev server proxies `/auth`, `/users`, `/api` to `:8080`.
 * `GET  /users/me`      → current user (requires `Authorization: Bearer <token>`)
 
 Frontend stores the token in **localStorage** and sends it on every request.
-On boot, if **no token**, frontend **does not** call `/users/me` (prevents phantom users).
 
 ---
 
