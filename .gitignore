@@ -6,6 +6,8 @@
 
 # VSCode
 .vscode/
+# ENV
+.env
 
 # Maven
 target/
