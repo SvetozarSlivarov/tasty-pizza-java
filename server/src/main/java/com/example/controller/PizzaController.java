@@ -35,7 +35,6 @@ public class PizzaController {
         boolean all = "true".equalsIgnoreCase(q.getOrDefault("all", "false"));
         boolean onlyAvailable = true;
         if (all) {
-            // вижда всички само ADMIN
             HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
             onlyAvailable = false;
         }
@@ -44,7 +43,7 @@ public class PizzaController {
         HttpUtils.sendJson(ex, 200, list);
     }
 
-    // POST /pizzas   (ADMIN) — body: PizzaDto (без id)
+    // POST /pizzas   (ADMIN) — body: PizzaDto
     public void handleCreate(HttpExchange ex) throws IOException {
         HttpUtils.requireMethod(ex, "POST");
         HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
@@ -64,13 +63,12 @@ public class PizzaController {
         HttpUtils.sendJson(ex, 200, dto);
     }
 
-    // PATCH /pizzas/{id}   (ADMIN) — body: PizzaDto (с id или ползваме path id)
+    // PATCH /pizzas/{id}   (ADMIN) — body: PizzaDto
     public void handleUpdate(HttpExchange ex, int id) throws IOException {
         HttpUtils.requireMethod(ex, "PATCH");
         HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
 
         PizzaDto body = JsonUtil.fromJson(HttpUtils.readBody(ex), PizzaDto.class);
-        // ако в body няма id, ползваме id от пътя
         PizzaDto toUpdate = new PizzaDto(
                 body.id() != null ? body.id() : id,
                 body.name(),
@@ -78,11 +76,42 @@ public class PizzaController {
                 body.basePrice(),
                 body.isAvailable(),
                 body.spicyLevel(),
+                body.imageUrl(),
                 body.variants()
         );
 
         PizzaDto updated = pizzaService.update(toUpdate);
         HttpUtils.sendJson(ex, 200, updated);
+    }
+    // POST /pizzas/{id}/image   (ADMIN)
+    public void handleUploadImage(HttpExchange ex, int id) throws IOException {
+        HttpUtils.requireMethod(ex, "POST");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+        var req = JsonUtil.fromJson(HttpUtils.readBody(ex), ImageUploadRequest.class);
+        var dto = pizzaService.uploadImage(id, req);
+        HttpUtils.sendJson(ex, 200, Map.of("id", dto.id(), "imageUrl", dto.imageUrl()));
+    }
+
+    public void handleUpdateImageUrl(HttpExchange ex, int id) throws IOException {
+        HttpUtils.requireMethod(ex, "PATCH");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+
+        record ImageUrlBody(String url) {}
+        ImageUrlBody b = JsonUtil.fromJson(HttpUtils.readBody(ex), ImageUrlBody.class);
+
+        PizzaDto current = pizzaService.get(id, false);
+        PizzaDto toUpdate = new PizzaDto(
+                id,
+                current.name(),
+                current.description(),
+                current.basePrice(),
+                current.isAvailable(),
+                current.spicyLevel(),
+                (b.url() == null || b.url().isBlank()) ? null : b.url().trim(),
+                current.variants()
+        );
+        PizzaDto updated = pizzaService.update(toUpdate);
+        HttpUtils.sendJson(ex, 200, Map.of("id", updated.id(), "imageUrl", updated.imageUrl()));
     }
 
     // DELETE /pizzas/{id}   (ADMIN)

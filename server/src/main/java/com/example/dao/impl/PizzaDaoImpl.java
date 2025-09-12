@@ -15,7 +15,7 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
     @Override
     public Pizza findById(int id) {
         String sql =
-                "SELECT p.id, p.name, p.description, p.base_price, p.is_available, z.spicy_level " +
+                "SELECT p.id, p.name, p.description, p.base_price, p.is_available, p.image_url, z.spicy_level " +
                         "FROM pizzas z " +
                         "JOIN products p ON p.id = z.product_id " +
                         "WHERE z.product_id = ? AND p.type = 'pizza'";
@@ -30,7 +30,7 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
     @Override
     public List<Pizza> findAll() {
         String sql =
-                "SELECT p.id, p.name, p.description, p.base_price, p.is_available, z.spicy_level " +
+                "SELECT p.id, p.name, p.description, p.base_price, p.is_available, p.image_url, z.spicy_level " +
                         "FROM pizzas z " +
                         "JOIN products p ON p.id = z.product_id " +
                         "WHERE p.type = 'pizza' " +
@@ -46,7 +46,7 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
     @Override
     public List<Pizza> findAvailable() {
         String sql =
-                "SELECT p.id, p.name, p.description, p.base_price, p.is_available, z.spicy_level " +
+                "SELECT p.id, p.name, p.description, p.base_price, p.is_available, p.image_url, z.spicy_level " +
                         "FROM pizzas z " +
                         "JOIN products p ON p.id = z.product_id " +
                         "WHERE p.type = 'pizza' AND p.is_available = TRUE " +
@@ -64,13 +64,14 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
         try {
             // 1) products
             String insProduct =
-                    "INSERT INTO products(type, name, description, base_price, is_available) " +
-                            "VALUES ('pizza', ?, ?, ?, ?)";
+                    "INSERT INTO products(type, name, description, base_price, is_available, image_url) " +
+                            "VALUES ('pizza', ?, ?, ?, ?, ?)";
             int newId = updateReturningId(insProduct, ps -> {
                 ps.setString(1, pizza.getName());
                 ps.setString(2, pizza.getDescription());
                 ps.setBigDecimal(3, pizza.getPrice());
                 ps.setBoolean(4, pizza.isAvailable());
+                ps.setString(5, pizza.getImageUrl());
             });
             if (newId <= 0) return null;
 
@@ -95,15 +96,16 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
     public Pizza update(Pizza pizza) {
         try {
             // products
-            String updProd =
-                    "UPDATE products SET name = ?, description = ?, base_price = ?, is_available = ? " +
+            String sql =
+                    "UPDATE products SET name = ?, description = ?, base_price = ?, is_available = ? , image_url = ? " +
                             "WHERE id = ? AND type = 'pizza'";
-            int rows = update(updProd, ps -> {
+            int rows = update(sql, ps -> {
                 ps.setString(1, pizza.getName());
                 ps.setString(2, pizza.getDescription());
                 ps.setBigDecimal(3, pizza.getPrice());
                 ps.setBoolean(4, pizza.isAvailable());
-                ps.setInt(5, pizza.getId());
+                ps.setString(5, pizza.getImageUrl());
+                ps.setInt(6, pizza.getId());
             });
 
             String updPizza = "UPDATE pizzas SET spicy_level = ? WHERE product_id = ?";
@@ -133,7 +135,6 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
         }
     }
 
-    // Вариации
     @Override
     public List<PizzaVariant> findVariants(int pizzaId) {
         String sql = "SELECT id, pizza_id, size, dough, extra_price " +
@@ -156,6 +157,7 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
         p.setPrice(rs.getBigDecimal("base_price"));
         p.setAvailable(rs.getBoolean("is_available"));
         p.setSpicyLevel(SpicyLevel.valueOf(rs.getString("spicy_level")));
+        p.setImageUrl(rs.getString("image_url"));
         return p;
     }
 

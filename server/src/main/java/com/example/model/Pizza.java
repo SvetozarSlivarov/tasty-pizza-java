@@ -10,6 +10,7 @@ public class Pizza {
     private String description;
     private BigDecimal basePrice;
     private boolean isAvailable;
+    private String imageUrl;
 
     private SpicyLevel spicyLevel;
 
@@ -45,6 +46,8 @@ public class Pizza {
     public List<PizzaVariant> getVariants() { return variants; }
     public void setVariants(List<PizzaVariant> variants) { this.variants = variants; }
 
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     @Override
     public String toString() {
         return "Pizza{" +
@@ -53,6 +56,7 @@ public class Pizza {
                 ", description='" + description + '\'' +
                 ", basePrice=" + basePrice +
                 ", isAvailable=" + isAvailable +
+                ", imageUrl = " + imageUrl +
                 ", spicyLevel=" + spicyLevel +
                 ", variants=" + (variants != null ? variants.size() : 0) +
                 '}';

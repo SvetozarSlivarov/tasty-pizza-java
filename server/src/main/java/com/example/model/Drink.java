@@ -8,6 +8,8 @@ public class Drink {
     private String description;
     private BigDecimal price;
     private boolean isAvailable;
+    private String imageUrl;
+
 
     public Drink() {};
     public Drink(String name, String description, BigDecimal price, boolean isAvailable){
@@ -56,6 +58,9 @@ public class Drink {
     public void setAvailable(boolean available) {
         this.isAvailable = available;
     }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     @Override
     public String toString(){
         return "Drink{" +
@@ -64,6 +69,7 @@ public class Drink {
                 ", description='" + description + '\'' +
                 ", price=" + price +
                 ", isAvailable=" + isAvailable +
+                ", imageUrl = " + imageUrl +
                 '}';
     }
 }

@@ -12,8 +12,6 @@ const Burger = ({ open }) => (
     </div>
 );
 
-// src/components/Navbar.jsx
-// ...imports stay the same
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);

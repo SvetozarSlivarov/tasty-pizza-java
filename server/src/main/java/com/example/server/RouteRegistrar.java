@@ -29,13 +29,16 @@ public class RouteRegistrar {
         apiR.register("GET",    "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleGet(ex, Integer.parseInt(m.group(1))));
         apiR.register("PATCH",  "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleUpdate(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleDelete(ex, Integer.parseInt(m.group(1))));
-
+        apiR.register("PATCH",  "^/pizzas/(\\d+)/image-url$", (ex, m) -> beans.pizzaCtl.handleUpdateImageUrl(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST", "^/pizzas/(\\d+)/image$",  (ex, m) -> beans.pizzaCtl.handleUploadImage(ex,  Integer.parseInt(m.group(1))));
         // DRINKS
         apiR.register("GET",    "^/drinks$",                (ex,m) -> beans.drinkCtl.handleList(ex));
         apiR.register("GET",    "^/drinks/(\\d+)$",         (ex,m) -> beans.drinkCtl.handleGet(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST",   "^/drinks$",                (ex,m) -> beans.drinkCtl.handleCreate(ex));                         // ADMIN
         apiR.register("PATCH",  "^/drinks/(\\d+)$",         (ex,m) -> beans.drinkCtl.handleUpdate(ex, Integer.parseInt(m.group(1)))); // ADMIN
         apiR.register("DELETE", "^/drinks/(\\d+)$",         (ex,m) -> beans.drinkCtl.handleDelete(ex, Integer.parseInt(m.group(1)))); // ADMIN
+        apiR.register("PATCH", "^/drinks/(\\d+)/image-url$", (ex, m) -> beans.drinkCtl.handleUpdateImageUrl(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST", "^/drinks/(\\d+)/image$",  (ex, m) -> beans.drinkCtl.handleUploadImage(ex,  Integer.parseInt(m.group(1))));
 
         // pizza base ingredients (public GET; admin POST/PATCH/DELETE)
         apiR.register("GET",    "^/pizzas/(\\d+)/ingredients$",                         (ex,m) -> beans.pizzaCtl.handleIngredientsList(ex, Integer.parseInt(m.group(1))));

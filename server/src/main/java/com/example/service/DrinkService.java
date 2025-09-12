@@ -4,23 +4,29 @@ import com.example.dao.DrinkDao;
 import com.example.dao.impl.DrinkDaoImpl;
 import com.example.dto.DrinkCreateRequest;
 import com.example.dto.DrinkUpdateRequest;
+import com.example.dto.ImageUploadRequest;
 import com.example.exception.BadRequestException;
 import com.example.exception.NotFoundException;
 import com.example.model.Drink;
 import com.example.model.enums.UserRole;
+import com.example.storage.StorageService;
 
+import java.util.Base64;
 import java.util.List;
 
 public class DrinkService {
 
     private final DrinkDao drinkDao;
+    private final StorageService storage;
 
-    public DrinkService() {
+    public DrinkService(StorageService storageService) {
         this.drinkDao = new DrinkDaoImpl();
+        this.storage = storageService;
     }
 
-    public DrinkService(DrinkDao drinkDao) {
+    public DrinkService(DrinkDao drinkDao, StorageService storage) {
         this.drinkDao = drinkDao;
+        this.storage = storage;
     }
 
     public List<Drink> findAll(boolean availableOnly, UserRole role) {
@@ -55,9 +61,33 @@ public class DrinkService {
             d.setDescription(desc.isEmpty() ? null : desc);
         }
 
+        if (req.imageUrl() != null) {
+            String url = req.imageUrl().trim();
+            d.setImageUrl(url.isEmpty() ? null : url);
+        }
+
         Drink saved = drinkDao.save(d);
         if (saved == null) throw new BadRequestException("drink_create_failed");
         return saved;
+    }
+    public Drink uploadImage(int drinkId, ImageUploadRequest req) {
+        if (req == null || req.dataBase64 == null || req.dataBase64.isBlank())
+            throw new BadRequestException("image_required");
+        if (req.contentType == null || !req.contentType.startsWith("image/"))
+            throw new BadRequestException("invalid_type");
+        byte[] bytes = Base64.getDecoder().decode(req.dataBase64);
+        if (bytes.length > 5 * 1024 * 1024) throw new BadRequestException("too_large");
+
+        var d = findById(drinkId);
+        try {
+            var up = storage.upload(bytes, req.filename, req.contentType);
+            d.setImageUrl(up.url());
+            var saved = drinkDao.update(d);
+            if (saved == null) throw new BadRequestException("drink_update_failed");
+            return saved;
+        } catch (Exception e) {
+            throw new BadRequestException("upload_failed");
+        }
     }
 
     public Drink update(int id, DrinkUpdateRequest req) {
@@ -77,6 +107,11 @@ public class DrinkService {
         }
         if (req.isAvailable() != null) {
             existing.setAvailable(req.isAvailable());
+        }
+
+        if (req.imageUrl() != null) {
+            String url = req.imageUrl().trim();
+            existing.setImageUrl(url.isEmpty() ? null : url);
         }
 
         Drink updated = drinkDao.update(existing);

@@ -59,6 +59,7 @@ public class SchemaBuilder {
                 description TEXT,
                 base_price DECIMAL(8,2) NOT NULL,
                 is_available BOOLEAN DEFAULT TRUE,
+                image_url VARCHAR(1024) NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """;

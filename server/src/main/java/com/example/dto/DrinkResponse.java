@@ -7,5 +7,6 @@ public record DrinkResponse(
         String name,
         String description,
         BigDecimal price,
-        boolean isAvailable
+        boolean isAvailable,
+        String imageUrl
 ) {}

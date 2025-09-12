@@ -21,6 +21,7 @@ public final class PizzaMapper {
                 p.getPrice(),
                 p.isAvailable(),
                 p.getSpicyLevel() != null ? p.getSpicyLevel().name() : null,
+                p.getImageUrl(),
                 variantsToDto(p.getVariants())
         );
     }
@@ -48,6 +49,7 @@ public final class PizzaMapper {
         if (dto.spicyLevel() != null) {
             p.setSpicyLevel(SpicyLevel.valueOf(dto.spicyLevel()));
         }
+        p.setImageUrl(dto.imageUrl());
         return p;
     }
 

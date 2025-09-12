@@ -10,5 +10,6 @@ public record PizzaDto(
         BigDecimal basePrice,
         Boolean isAvailable,
         String spicyLevel,
+        String imageUrl,
         List<PizzaVariantDto> variants
 ) {}

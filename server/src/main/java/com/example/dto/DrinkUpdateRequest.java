@@ -6,6 +6,6 @@ public record DrinkUpdateRequest(
         String name,
         BigDecimal price,
         String description,
-
-        Boolean isAvailable
+        Boolean isAvailable,
+        String imageUrl
 ) {}

@@ -63,3 +63,4 @@ INSERT INTO pizza_allowed_ingredients (pizza_id, ingredient_id) VALUES
 (2, 6),
 (2, 7),
 (2, 8);
+ALTER TABLE products ADD COLUMN image_url VARCHAR(1024) NULL;

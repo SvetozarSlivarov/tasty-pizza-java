@@ -1,7 +1,42 @@
+// src/pages/Home.jsx
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "../styles/home.css";
+import { catalogApi } from "../api/catalog";
+
+const FallbackImg = "https://via.placeholder.com/400x260?text=No+image";
 
 export default function Home() {
+    const [latestPizzas, setLatestPizzas] = useState([]);
+    const [latestDrinks, setLatestDrinks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [err, setErr] = useState(null);
+
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                setLoading(true);
+                const [pz, dr] = await Promise.all([
+                    catalogApi.pizzas(true),   // взимаме налични пици
+                    catalogApi.drinks(true),   // и налични напитки
+                ]);
+
+                if (!mounted) return;
+
+                const byIdDesc = (a, b) => (b?.id ?? 0) - (a?.id ?? 0);
+                setLatestPizzas((pz ?? []).slice().sort(byIdDesc).slice(0, 3));
+                setLatestDrinks((dr ?? []).slice().sort(byIdDesc).slice(0, 3));
+            } catch (e) {
+                console.error(e);
+                setErr(e?.message || "Неуспешно зареждане");
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
+
     return (
         <div className="home">
             {/* HERO */}
@@ -42,39 +77,83 @@ export default function Home() {
                 </div>
             </section>
 
-            <section className="menu-preview">
-                <div className="head">
-                    <h2>Best sellers</h2>
-                    <Link to="/menu" className="btn link">See full menu →</Link>
+            {/* NEWEST PIZZAS */}
+            <section className="section">
+                <div className="container">
+                    <h2 className="section-title">NEWEST PIZZAS</h2>
+
+                    {loading && (
+                        <div className="skeleton-grid">
+                            {Array.from({ length: 3 }).map((_, i) => <div className="skeleton-card" key={i} />)}
+                        </div>
+                    )}
+
+                    {err && <p className="error">{err}</p>}
+
+                    {!loading && !err && (
+                        <div className="grid">
+                            {latestPizzas.map(p => (
+                                <article className="card" key={p.id}>
+                                    <div className="thumb">
+                                        <img src={p.imageUrl || FallbackImg} alt={p.name} loading="lazy" />
+                                    </div>
+                                    <div className="body">
+                                        <h3 className="title">{p.name}</h3>
+                                        {p.description && <p className="desc">{p.description}</p>}
+                                        <div className="meta">
+                                            <span className="price">from {Number(p.basePrice ?? p.price).toFixed(2)} EUR</span>
+                                            {p.spicyLevel && <span className="badge">{p.spicyLevel}</span>}
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <div className="cards">
-                    {[
-                        { name: "Margherita", price: "9.90", emoji: "🍅" },
-                        { name: "Pepperoni", price: "12.90", emoji: "🌶️" },
-                        { name: "Four Cheese", price: "13.90", emoji: "🧀" },
-                    ].map((p) => (
-                        <article className="card" key={p.name}>
-                            <div className="pic">{p.emoji}</div>
-                            <h4>{p.name}</h4>
-                            <p className="price">{p.price} BGN</p>
-                            <Link to="/menu" className="btn small">Add</Link>
-                        </article>
-                    ))}
+            </section>
+
+            {/* NEWEST DRINKS */}
+            <section className="section">
+                <div className="container">
+                    <h2 className="section-title">NEWEST DRINKS</h2>
+
+                    {loading && (
+                        <div className="skeleton-grid">
+                            {Array.from({ length: 3 }).map((_, i) => <div className="skeleton-card" key={i} />)}
+                        </div>
+                    )}
+
+                    {!loading && !err && (
+                        <div className="grid drinks">
+                            {latestDrinks.map(d => (
+                                <article className="card" key={d.id}>
+                                    <div className="thumb">
+                                        <img src={d.imageUrl || FallbackImg} alt={d.name} loading="lazy" />
+                                    </div>
+                                    <div className="body">
+                                        <h3 className="title">{d.name}</h3>
+                                        {d.description && <p className="desc">{d.description}</p>}
+                                        <div className="meta">
+                                            <span className="price">{Number(d.price).toFixed(2)} EUR</span>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="more-row">
+                        <Link className="btn link" to="/menu">See all →</Link>
+                    </div>
                 </div>
             </section>
 
             <section className="testimonials">
                 <h2>What our customers say</h2>
                 <div className="quotes">
-                    <blockquote>
-                        “Best crust in town!” <cite>— Mira</cite>
-                    </blockquote>
-                    <blockquote>
-                        “Arrived in 22 minutes. Hot and juicy.” <cite>— Ivan</cite>
-                    </blockquote>
-                    <blockquote>
-                        “My favorite Pepperoni. Perfect balance.” <cite>— George</cite>
-                    </blockquote>
+                    <blockquote>“Best crust in town!” <cite>— Mira</cite></blockquote>
+                    <blockquote>“Arrived in 22 minutes. Hot and juicy.” <cite>— Ivan</cite></blockquote>
+                    <blockquote>“My favorite Pepperoni. Perfect balance.” <cite>— George</cite></blockquote>
                 </div>
             </section>
         </div>

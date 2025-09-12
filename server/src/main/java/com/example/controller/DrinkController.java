@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.dto.DrinkCreateRequest;
 import com.example.dto.DrinkResponse;
 import com.example.dto.DrinkUpdateRequest;
+import com.example.dto.ImageUploadRequest;
 import com.example.http.HttpUtils;
 import com.example.model.Drink;
 import com.example.model.enums.UserRole;
@@ -34,7 +35,14 @@ public class DrinkController {
 
         List<Drink> list = drinks.findAll(availableOnly, role);
         var resp = list.stream()
-                .map(d -> new DrinkResponse(d.getId(), d.getName(), d.getDescription(), d.getPrice(), d.isAvailable()))
+                .map(d -> new DrinkResponse(
+                        d.getId(),
+                        d.getName(),
+                        d.getDescription(),
+                        d.getPrice(),
+                        d.isAvailable(),
+                        d.getImageUrl()
+                ))
                 .toList();
 
         HttpUtils.sendJson(ex, 200, resp);
@@ -44,7 +52,9 @@ public class DrinkController {
     public void handleGet(HttpExchange ex, int id) throws IOException {
         HttpUtils.requireMethod(ex, "GET");
         Drink d = drinks.findById(id);
-        HttpUtils.sendJson(ex, 200, new DrinkResponse(d.getId(), d.getName(), d.getDescription(), d.getPrice(), d.isAvailable()));
+        HttpUtils.sendJson(ex, 200, new DrinkResponse(
+                d.getId(), d.getName(), d.getDescription(), d.getPrice(), d.isAvailable(), d.getImageUrl()
+        ));
     }
 
     // POST /api/drinks   (ADMIN)
@@ -55,7 +65,9 @@ public class DrinkController {
         DrinkCreateRequest req = JsonUtil.fromJson(HttpUtils.readBody(ex), DrinkCreateRequest.class);
         Drink d = drinks.create(req);
 
-        HttpUtils.sendJson(ex, 201, new DrinkResponse(d.getId(), d.getName(), d.getDescription(), d.getPrice(), d.isAvailable()));
+        HttpUtils.sendJson(ex, 201, new DrinkResponse(
+                d.getId(), d.getName(), d.getDescription(), d.getPrice(), d.isAvailable(), d.getImageUrl()
+        ));
     }
 
     // PATCH /api/drinks/{id}   (ADMIN)
@@ -66,7 +78,30 @@ public class DrinkController {
         DrinkUpdateRequest req = JsonUtil.fromJson(HttpUtils.readBody(ex), DrinkUpdateRequest.class);
         Drink d = drinks.update(id, req);
 
-        HttpUtils.sendJson(ex, 200, new DrinkResponse(d.getId(), d.getName(), d.getDescription(), d.getPrice(), d.isAvailable()));
+        HttpUtils.sendJson(ex, 200, new DrinkResponse(
+                d.getId(), d.getName(), d.getDescription(), d.getPrice(), d.isAvailable(), d.getImageUrl()
+        ));
+    }
+    // POST /drinks/{id}/image   (ADMIN)
+    public void handleUploadImage(HttpExchange ex, int id) throws IOException {
+        HttpUtils.requireMethod(ex, "POST");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+        var req = JsonUtil.fromJson(HttpUtils.readBody(ex), ImageUploadRequest.class);
+        var d = drinks.uploadImage(id, req);
+        HttpUtils.sendJson(ex, 200, Map.of("id", d.getId(), "imageUrl", d.getImageUrl()));
+    }
+    public void handleUpdateImageUrl(HttpExchange ex, int id) throws IOException {
+        HttpUtils.requireMethod(ex, "PATCH");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+
+        record ImageUrlBody(String url) {}
+        ImageUrlBody b = JsonUtil.fromJson(HttpUtils.readBody(ex), ImageUrlBody.class);
+
+        var updated = drinks.update(id, new DrinkUpdateRequest(
+                null, null, null, null, b.url()
+        ));
+
+        HttpUtils.sendJson(ex, 200, Map.of("id", updated.getId(), "imageUrl", updated.getImageUrl()));
     }
 
     // DELETE /api/drinks/{id}  (ADMIN)

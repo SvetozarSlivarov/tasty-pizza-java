@@ -6,5 +6,7 @@ public record DrinkCreateRequest(
         String name,
         String description,
         BigDecimal price,
-        Boolean isAvailable
+        Boolean isAvailable,
+        String imageUrl
+
 ) {}
