@@ -7,7 +7,7 @@
 # VSCode
 .vscode/
 # ENV
-.env
+**/.env
 
 # Maven
 target/
