@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import "../styles/home.css";
 import { catalogApi } from "../api/catalog";
 
-const FallbackImg = "https://via.placeholder.com/400x260?text=No+image";
+const FallbackImg = "images/fallBackImg.png";
 
 export default function Home() {
     const [latestPizzas, setLatestPizzas] = useState([]);
