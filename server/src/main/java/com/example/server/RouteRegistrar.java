@@ -73,6 +73,16 @@ public class RouteRegistrar {
         apiR.register("DELETE", "^/cart/items/(\\d+)$",       (ex,m) -> beans.cartCtl.handleDeleteItem(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST",   "^/cart/checkout$",           (ex,m) -> beans.cartCtl.handleCheckout(ex));
 
+        apiR.register("GET",  "^/orders/(\\d+)$",
+                (ex, m) -> beans.orderCtl.handleGetOne(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST", "^/orders/(\\d+)/start-preparing$",
+                (ex, m) -> beans.orderCtl.handleStartPreparing(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST", "^/orders/(\\d+)/out-for-delivery$",
+                (ex, m) -> beans.orderCtl.handleOutForDelivery(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST", "^/orders/(\\d+)/deliver$",
+                (ex, m) -> beans.orderCtl.handleDeliver(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST", "^/orders/(\\d+)/cancel$",
+                (ex, m) -> beans.orderCtl.handleCancel(ex, Integer.parseInt(m.group(1))));
         // USERS
         var usersR = new ContextRouter();
         usersR.register("GET",    "^/me$",                   (ex,m) -> beans.userCtl.getMe(ex));

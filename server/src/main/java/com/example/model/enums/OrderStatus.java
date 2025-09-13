@@ -1,8 +1,10 @@
 package com.example.model.enums;
 
 public enum OrderStatus {
-    PENDING,
-    IN_PROGRESS,
+    CART,
+    ORDERED,
+    PREPARING,
+    OUT_FOR_DELIVERY,
     DELIVERED,
     CANCELLED
 }

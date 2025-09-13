@@ -2,18 +2,20 @@ package com.example.service;
 
 import com.example.dao.*;
 import com.example.dao.impl.*;
+import com.example.dto.CartCustomizationView;
+import com.example.dto.CartItemView;
+import com.example.dto.CartView;
 import com.example.model.*;
-
 import com.example.model.enums.CustomizationAction;
 import com.example.model.enums.OrderStatus;
-import com.example.dto.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-public class CartService{
+public class CartService {
+
     private final OrderDao orderDao = new OrderDaoImpl();
     private final OrderItemDao itemDao = new OrderItemDaoImpl();
     private final OrderItemCustomizationDao custDao = new OrderItemCustomizationDaoImpl();
@@ -27,17 +29,21 @@ public class CartService{
     public int ensureCart(Integer userId, Integer cartIdHint) {
         if (cartIdHint != null) {
             var o = orderDao.findById(cartIdHint);
-            if (o != null && o.getStatus() == OrderStatus.PENDING) return o.getId();
+            if (o != null && o.getStatus() == OrderStatus.CART) return o.getId();
         }
         if (userId != null && userId > 0) {
-            for (var o : orderDao.findByUserId(userId))
-                if (o.getStatus() == OrderStatus.PENDING) return o.getId();
-            var created = new Order(userId, OrderStatus.PENDING);
+            for (var o : orderDao.findByUserId(userId)) {
+                if (o.getStatus() == OrderStatus.CART) return o.getId();
+            }
+            var created = new Order();
+            created.setUserId(userId);
+            created.setStatus(OrderStatus.CART);
             orderDao.save(created);
             return created.getId();
         }
-
-        var created = new Order(null, OrderStatus.PENDING);
+        var created = new Order();
+        created.setUserId(null);
+        created.setStatus(OrderStatus.CART);
         orderDao.save(created);
         return created.getId();
     }
@@ -45,6 +51,7 @@ public class CartService{
     public CartView getCart(int orderId) {
         var o = orderDao.findById(orderId);
         if (o == null) throw new IllegalArgumentException("order_not_found");
+
         var rows = itemDao.findByOrderId(orderId);
         var items = new ArrayList<CartItemView>();
         var total = BigDecimal.ZERO;
@@ -52,16 +59,37 @@ public class CartService{
         for (var it : rows) {
             var custs = custDao.findByOrderItemId(it.getId());
             var cv = new ArrayList<CartCustomizationView>();
-            for (var c : custs) cv.add(new CartCustomizationView(c.getIngredient().getId(), c.getAction().name()));
+            for (var c : custs) {
+                cv.add(new CartCustomizationView(
+                        c.getIngredient().getId(),
+                        c.getAction().name()
+                ));
+            }
             var line = it.getUnitPrice().multiply(BigDecimal.valueOf(it.getQuantity()));
             total = total.add(line);
-            items.add(new CartItemView(it.getId(), it.getProductId(), it.getPizzaVariantId(),
-                    it.getQuantity(), it.getUnitPrice(), it.getNote(), cv));
+
+            items.add(new CartItemView(
+                    it.getId(),
+                    it.getProductId(),
+                    it.getPizzaVariantId(),
+                    it.getQuantity(),
+                    it.getUnitPrice(),
+                    it.getNote(),
+                    cv
+            ));
         }
-        return new CartView(o.getId(), o.getStatus().name().toLowerCase(), items, total);
+
+        return new CartView(
+                o.getId(),
+                o.getStatus().name().toLowerCase(),
+                items,
+                total
+        );
     }
+
     public OrderItem addDrink(int orderId, int productId, int qty, String note) {
         if (qty <= 0) throw new IllegalArgumentException("qty_invalid");
+
         var d = drinkDao.findById(productId);
         if (d == null) throw new IllegalArgumentException("drink_not_found");
 
@@ -73,14 +101,18 @@ public class CartService{
     public OrderItem addPizza(int orderId, int productId, Integer variantId, int qty, String note,
                               List<Integer> removeIds, List<Integer> addIds) {
         if (qty <= 0) throw new IllegalArgumentException("qty_invalid");
+
         var p = pizzaDao.findById(productId);
         if (p == null) throw new IllegalArgumentException("pizza_not_found");
 
         BigDecimal unit = p.getPrice();
         Integer toSet = null;
+
         if (variantId != null) {
             var v = variantDao.findById(variantId);
-            if (v == null || v.getPizzaId() != productId) throw new IllegalArgumentException("variant_invalid");
+            if (v == null || v.getPizzaId() != productId) {
+                throw new IllegalArgumentException("variant_invalid");
+            }
             unit = unit.add(v.getExtraPrice());
             toSet = v.getId();
         }
@@ -95,18 +127,28 @@ public class CartService{
                 if (!ok) throw new IllegalArgumentException("remove_not_removable");
             }
         }
+
         if (addIds != null && !addIds.isEmpty()) {
             var allowed = new HashSet<>(allowedDao.findIngredientIdsByPizzaId(productId));
-            for (Integer ing : addIds) if (!allowed.contains(ing)) throw new IllegalArgumentException("add_not_allowed");
+            for (Integer ing : addIds) {
+                if (!allowed.contains(ing)) throw new IllegalArgumentException("add_not_allowed");
+            }
         }
 
         var oi = baseItem(orderId, productId, toSet, qty, unit, note);
         if (!itemDao.save(oi)) throw new IllegalStateException("create_failed");
 
-        if (removeIds != null) for (Integer ing : removeIds)
-            custDao.add(new OrderCustomization(oi, ingredient(ing), CustomizationAction.REMOVE));
-        if (addIds != null) for (Integer ing : addIds)
-            custDao.add(new OrderCustomization(oi, ingredient(ing), CustomizationAction.ADD));
+        if (removeIds != null) {
+            for (Integer ing : removeIds) {
+                custDao.add(new OrderCustomization(oi, ingredient(ing), com.example.model.enums.CustomizationAction.REMOVE));
+            }
+        }
+        if (addIds != null) {
+            for (Integer ing : addIds) {
+                custDao.add(new OrderCustomization(oi, ingredient(ing), CustomizationAction.ADD));
+            }
+        }
+
         return oi;
     }
 
@@ -118,39 +160,101 @@ public class CartService{
     public void setVariant(int itemId, Integer variantId) {
         var it = itemDao.findById(itemId);
         if (it == null) throw new IllegalArgumentException("item_not_found");
+
         var base = pizzaDao.findById(it.getProductId());
         if (base == null) throw new IllegalArgumentException("not_a_pizza");
 
         BigDecimal unit = base.getPrice();
         Integer toSet = null;
+
         if (variantId != null) {
             var v = variantDao.findById(variantId);
-            if (v == null || v.getPizzaId() != it.getProductId()) throw new IllegalArgumentException("variant_invalid");
+            if (v == null || v.getPizzaId() != it.getProductId()) {
+                throw new IllegalArgumentException("variant_invalid");
+            }
             unit = unit.add(v.getExtraPrice());
             toSet = v.getId();
         }
-        if (!((OrderItemDaoImpl)itemDao).updateVariantAndPrice(itemId, toSet, unit))
+
+        if (!((OrderItemDaoImpl) itemDao).updateVariantAndPrice(itemId, toSet, unit)) {
             throw new IllegalStateException("update_failed");
+        }
     }
 
     public void setNote(int itemId, String note) {
-        if (!((OrderItemDaoImpl)itemDao).updateNote(itemId, note))
+        if (!((OrderItemDaoImpl) itemDao).updateNote(itemId, note)) {
             throw new IllegalStateException("update_failed");
+        }
     }
 
     public void removeItem(int itemId) {
         if (!itemDao.delete(itemId)) throw new IllegalStateException("delete_failed");
     }
 
+    public void setDeliveryInfo(int orderId, String phone, String address) {
+        if (!orderDao.setDeliveryInfo(orderId, phone, address)) {
+            throw new IllegalStateException("cannot_set_delivery_info");
+        }
+    }
+
     public void checkout(int orderId) {
-        if (!orderDao.updateStatus(orderId, "preparing"))
+        var o = orderDao.findById(orderId);
+        if (o == null) throw new IllegalArgumentException("order_not_found");
+        if (o.getStatus() != OrderStatus.CART) throw new IllegalStateException("not_in_cart");
+
+        if (!orderDao.updateStatus(orderId, "ordered"))
             throw new IllegalStateException("cannot_checkout");
+        if (!orderDao.setOrderedNow(orderId))
+            throw new IllegalStateException("cannot_set_ordered_at");
+    }
+
+
+    public void startPreparing(int orderId) {
+        transition(orderId, OrderStatus.ORDERED, OrderStatus.PREPARING, "cannot_start_preparing");
+        if (!orderDao.setPreparingNow(orderId))
+            throw new IllegalStateException("cannot_set_preparing_at");
+    }
+
+    public void outForDelivery(int orderId) {
+        transition(orderId, OrderStatus.PREPARING, OrderStatus.OUT_FOR_DELIVERY, "cannot_out_for_delivery");
+        if (!orderDao.setOutForDeliveryNow(orderId))
+            throw new IllegalStateException("cannot_set_out_for_delivery_at");
+    }
+
+    public void deliver(int orderId) {
+        transition(orderId, OrderStatus.OUT_FOR_DELIVERY, OrderStatus.DELIVERED, "cannot_deliver");
+        if (!orderDao.setDeliveredNow(orderId))
+            throw new IllegalStateException("cannot_set_delivered_at");
+    }
+
+    public void cancel(int orderId) {
+        var o = orderDao.findById(orderId);
+        if (o == null) throw new IllegalArgumentException("order_not_found");
+        if (o.getStatus() == OrderStatus.DELIVERED) throw new IllegalStateException("cannot_cancel_delivered");
+        if (!orderDao.updateStatus(orderId, "cancelled"))
+            throw new IllegalStateException("cannot_cancel");
+        if (!orderDao.setCancelledNow(orderId))
+            throw new IllegalStateException("cannot_set_cancelled_at");
+    }
+
+    private void transition(int orderId, OrderStatus requiredCurrent, OrderStatus target, String err) {
+        var o = orderDao.findById(orderId);
+        if (o == null) throw new IllegalArgumentException("order_not_found");
+        if (o.getStatus() != requiredCurrent) throw new IllegalStateException("invalid_status_transition");
+        if (!orderDao.updateStatus(orderId, target.name().toLowerCase()))
+            throw new IllegalStateException(err);
     }
 
     private static OrderItem baseItem(int orderId, int productId, Integer variantId,
                                       int qty, BigDecimal unit, String note) {
-        Order o = new Order(); o.setId(orderId);
+        Order o = new Order();
+        o.setId(orderId);
         return new OrderItem(o, productId, variantId, qty, unit, note);
     }
-    private static Ingredient ingredient(int id){ var i=new Ingredient(); i.setId(id); return i; }
+
+    private static Ingredient ingredient(int id) {
+        var i = new Ingredient();
+        i.setId(id);
+        return i;
+    }
 }

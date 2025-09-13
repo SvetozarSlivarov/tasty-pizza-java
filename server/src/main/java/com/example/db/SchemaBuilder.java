@@ -13,20 +13,18 @@ public class SchemaBuilder {
             createUsersTable(stmt);
             createProductsTable(stmt);
 
-            // marker субтипове
             createPizzasTable(stmt);
             createDrinksTable(stmt);
 
-            // вариации за пиците
             createPizzaVariantsTable(stmt);
 
             createIngredientTypesTable(stmt);
             createIngredientsTable(stmt);
-            createPizzaIngredientsTable(stmt);          // default toppings
-            createPizzaAllowedIngredientsTable(stmt);   // allowed extras
+            createPizzaIngredientsTable(stmt);
+            createPizzaAllowedIngredientsTable(stmt);
 
             createOrdersTable(stmt);
-            createOrderItemsTable(stmt);                // с опционален pizza_variant_id
+            createOrderItemsTable(stmt);
             createOrderItemCustomizationsTable(stmt);
 
             System.out.println("All tables created or already exist.");
@@ -66,7 +64,6 @@ public class SchemaBuilder {
         stmt.executeUpdate(sql);
     }
 
-    // Маркерни таблици (само PK/FK към products)
     private static void createPizzasTable(Statement stmt) throws SQLException {
         String sql = """
             CREATE TABLE IF NOT EXISTS pizzas (
@@ -154,13 +151,37 @@ public class SchemaBuilder {
 
     private static void createOrdersTable(Statement stmt) throws SQLException {
         String sql = """
-            CREATE TABLE IF NOT EXISTS orders (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                user_id INT NULL,
-                status ENUM('pending','preparing','delivered','cancelled') NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            )
+        CREATE TABLE IF NOT EXISTS orders (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NULL,
+
+            status ENUM(
+                'cart',
+                'ordered',
+                'preparing',
+                'out_for_delivery',
+                'delivered',
+                'cancelled'
+            ) NOT NULL DEFAULT 'cart',
+
+            ordered_at DATETIME NULL,
+            preparing_at DATETIME NULL,
+            out_for_delivery_at DATETIME NULL,
+            delivered_at DATETIME NULL,
+            cancelled_at DATETIME NULL,
+
+            delivery_phone   VARCHAR(32) NULL,
+            delivery_address TEXT NULL,
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+            CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+            KEY idx_orders_user (user_id),
+            KEY idx_orders_status (status),
+            KEY idx_orders_times (ordered_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """;
         stmt.executeUpdate(sql);
     }
