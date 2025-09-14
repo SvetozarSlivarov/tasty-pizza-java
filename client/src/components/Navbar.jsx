@@ -1,10 +1,8 @@
 import {useEffect, useState} from "react";
 import { useAuth } from "../context/AuthContext";
-import { FaShoppingCart } from "react-icons/fa";
 import {NavLink, Link, useLocation, useNavigate} from "react-router-dom";
 import "../styles/navbar.css";
 
-const CartIcon = () => <FaShoppingCart size={20}/>
 
 const Burger = ({ open }) => (
     <div className={`burger ${open ? "open" : ""}`} aria-hidden>
@@ -62,10 +60,6 @@ export default function Navbar() {
                                 <button className="linklike" type="button" onClick={handleSignOut}>Sign out</button>
                             </>
                         )}
-                        <NavLink to="/cart" className="cart" onClick={closeMenu}>
-                            <CartIcon />
-                            <span>Cart</span>
-                        </NavLink>
                     </nav>
 
                     <button
