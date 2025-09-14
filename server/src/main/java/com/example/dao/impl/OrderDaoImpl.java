@@ -7,6 +7,8 @@ import com.example.model.enums.OrderStatus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -162,7 +164,32 @@ public class OrderDaoImpl extends AbstractDao implements OrderDao {
             return false;
         }
     }
+    @Override
+    public int deleteGuestCartsOlderThan(Instant cutoff) {
+        final String sql =
+                "DELETE FROM orders " +
+                        "WHERE user_id IS NULL " +
+                        "  AND status = ? " +
+                        "  AND COALESCE(updated_at, created_at) < ?";
 
+        try {
+            return update(sql, ps -> {
+                ps.setString(1, "cart");
+                ps.setTimestamp(2, Timestamp.from(cutoff));
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("deleteGuestCartsOlderThan failed", e);
+        }
+    }
+    @Override
+    public void touch(int orderId) {
+        final String sql = "UPDATE orders SET updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        try {
+            update(sql, ps -> ps.setInt(1, orderId));
+        } catch (Exception e) {
+            throw new RuntimeException("orders.touch failed", e);
+        }
+    }
     @Override
     public boolean delete(int id) {
         String sql = "DELETE FROM orders WHERE id = ?";

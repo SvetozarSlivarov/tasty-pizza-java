@@ -72,7 +72,7 @@ public class RouteRegistrar {
         apiR.register("PATCH",  "^/cart/items/(\\d+)$",       (ex,m) -> beans.cartCtl.handleUpdateItem(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/cart/items/(\\d+)$",       (ex,m) -> beans.cartCtl.handleDeleteItem(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST",   "^/cart/checkout$",           (ex,m) -> beans.cartCtl.handleCheckout(ex));
-
+        // ORDERS
         apiR.register("GET",  "^/orders/(\\d+)$",
                 (ex, m) -> beans.orderCtl.handleGetOne(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST", "^/orders/(\\d+)/start-preparing$",
@@ -83,6 +83,9 @@ public class RouteRegistrar {
                 (ex, m) -> beans.orderCtl.handleDeliver(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST", "^/orders/(\\d+)/cancel$",
                 (ex, m) -> beans.orderCtl.handleCancel(ex, Integer.parseInt(m.group(1))));
+        //ADMIN
+        apiR.register("POST", "^/admin/prune-guest-carts$", (ex, m) -> beans.maintenanceController.handlePruneGuestCarts(ex));
+
         // USERS
         var usersR = new ContextRouter();
         usersR.register("GET",    "^/me$",                   (ex,m) -> beans.userCtl.getMe(ex));
@@ -94,6 +97,7 @@ public class RouteRegistrar {
         usersR.register("DELETE", "^/by-username/[^/]+$",      (ex,m) -> beans.userCtl.deleteByUsername(ex));
         HttpContext users = server.createContext("/users", usersR::handle);
         addFilters(users, cors, access, authRequired);
+
 
         // Health
         HttpContext health = server.createContext("/health", ex -> HttpUtils.sendText(ex, 200, "OK"));

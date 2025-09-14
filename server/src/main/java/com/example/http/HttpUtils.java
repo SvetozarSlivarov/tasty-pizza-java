@@ -89,6 +89,9 @@ public final class HttpUtils {
             return null;
         }
     }
+    public static void setCookie(HttpExchange ex, String name, String value, int maxAgeSeconds) {
+        setCookie(ex, name, value, maxAgeSeconds, false, "Lax");
+    }
     public static Integer tryGetCookieInt(HttpExchange ex, String name) {
         List<String> cookies = ex.getRequestHeaders().get("Cookie");
         if (cookies == null) return null;
@@ -97,16 +100,58 @@ public final class HttpUtils {
             String[] parts = header.split(";");
             for (String part : parts) {
                 String[] kv = part.trim().split("=", 2);
-                if (kv.length == 2 && kv[0].equals(name)) {
-                    try {
-                        return Integer.parseInt(kv[1]);
-                    } catch (NumberFormatException ignored) {
-                        return null;
-                    }
+                if (kv.length != 2) continue;
+
+                String k = kv[0].trim();
+                if (!k.equals(name)) continue;
+
+                String v = kv[1].trim();
+                if (v.length() >= 2 && v.charAt(0) == '"' && v.charAt(v.length()-1) == '"') {
+                    v = v.substring(1, v.length()-1);
+                }
+                try {
+                    return Integer.parseInt(v);
+                } catch (NumberFormatException ignored) {
+                    return null;
                 }
             }
         }
         return null;
+    }
+
+    public static String tryGetCookie(HttpExchange ex, String name) {
+        List<String> cookies = ex.getRequestHeaders().get("Cookie");
+        if (cookies == null) return null;
+
+        for (String header : cookies) {
+            String[] parts = header.split(";");
+            for (String part : parts) {
+                String[] kv = part.trim().split("=", 2);
+                if (kv.length != 2) continue;
+
+                String k = kv[0].trim();
+                if (!k.equals(name)) continue;
+
+                String v = kv[1].trim();
+                if (v.length() >= 2 && v.charAt(0) == '"' && v.charAt(v.length()-1) == '"') {
+                    v = v.substring(1, v.length()-1);
+                }
+                return v;
+            }
+        }
+        return null;
+    }
+
+    public static void setCookie(HttpExchange ex, String name, String value, int maxAgeSeconds,
+                                 boolean secure, String sameSite) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append("=").append(value)
+                .append("; Path=/")
+                .append("; HttpOnly")
+                .append("; Max-Age=").append(maxAgeSeconds);
+        if (sameSite != null) sb.append("; SameSite=").append(sameSite);
+        if (secure || "None".equalsIgnoreCase(sameSite)) sb.append("; Secure");
+        ex.getResponseHeaders().add("Set-Cookie", sb.toString());
     }
     public static void notFound(HttpExchange ex) throws IOException {
         sendJson(ex, 404, Map.of("error", "not_found"));

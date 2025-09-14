@@ -10,6 +10,7 @@ import com.example.security.JwtService;
 import com.example.service.UserService;
 import com.example.utils.JsonUtil;
 import com.sun.net.httpserver.HttpExchange;
+import com.example.service.CartService;
 
 import java.io.IOException;
 import java.util.Map;
@@ -27,12 +28,18 @@ public class AuthController {
         var req = JsonUtil.fromJson(HttpUtils.readBody(ex), LoginRequest.class);
         if (req.username == null || req.password == null) { HttpUtils.sendJson(ex, 400, Map.of("error","bad_request")); return; }
 
-        var u = users.login(req.username, req.password);
-        if (u.isEmpty()) { HttpUtils.sendJson(ex, 401, Map.of("error","invalid_credentials")); return; }
+        var uOpt = users.login(req.username, req.password);
+        if (uOpt.isEmpty()) { HttpUtils.sendJson(ex, 401, Map.of("error","invalid_credentials")); return; }
 
-        var role = u.get().getRole() != null ? u.get().getRole().name() : UserRole.CUSTOMER.name();
-        String token = jwt.issue(req.username, role);
-        HttpUtils.sendJson(ex, 200, new AuthResponse(req.username, token));
+        var u = uOpt.get();
+        var role = u.getRole() != null ? u.getRole().name() : UserRole.CUSTOMER.name();
+        String token = jwt.issue(u.getId(), u.getUsername(), role);
+
+        Integer cartIdHint = HttpUtils.tryGetCookieInt(ex, "cartId");
+        int cartId = new CartService().ensureCart(u.getId(), cartIdHint);
+        HttpUtils.setCookie(ex, "cartId", String.valueOf(cartId), 60 * 60 * 24 * 30);
+
+        HttpUtils.sendJson(ex, 200, new AuthResponse(u.getUsername(), token));
     }
 
     public void handleRegister(HttpExchange ex) throws IOException {
@@ -43,7 +50,16 @@ public class AuthController {
         boolean ok = users.register(req.fullname, req.username, req.password);
         if (!ok) { HttpUtils.sendJson(ex, 409, Map.of("error","username_exists")); return; }
 
-        String token = jwt.issue(req.username, UserRole.CUSTOMER.name());
-        HttpUtils.sendJson(ex, 201, new AuthResponse(req.username, token));
+        var uOpt = users.login(req.username, req.password);
+        if (uOpt.isEmpty()) { HttpUtils.sendJson(ex, 500, Map.of("error","register_login_failed")); return; }
+
+        var u = uOpt.get();
+        String token = jwt.issue(u.getId(), u.getUsername(), UserRole.CUSTOMER.name());
+
+        Integer cartIdHint = HttpUtils.tryGetCookieInt(ex, "cartId");
+        int cartId = new CartService().ensureCart(u.getId(), cartIdHint);
+        HttpUtils.setCookie(ex, "cartId", String.valueOf(cartId), 60 * 60 * 24 * 30);
+
+        HttpUtils.sendJson(ex, 201, new AuthResponse(u.getUsername(), token));
     }
 }

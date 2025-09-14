@@ -6,7 +6,7 @@ public class OrderItem {
     private int id;
     private Order order;
     private int productId;
-    private Integer pizzaVariantId; // nullable
+    private Integer pizzaVariantId;
     private int quantity;
     private BigDecimal unitPrice;
     private String note;
@@ -50,4 +50,5 @@ public class OrderItem {
                 ", note='" + note + '\'' +
                 '}';
     }
+
 }

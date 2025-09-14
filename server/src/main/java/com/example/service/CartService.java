@@ -28,9 +28,41 @@ public class CartService {
 
     public int ensureCart(Integer userId, Integer cartIdHint) {
         if (cartIdHint != null) {
-            var o = orderDao.findById(cartIdHint);
-            if (o != null && o.getStatus() == OrderStatus.CART) return o.getId();
+            var cookieCart = orderDao.findById(cartIdHint);
+            if (cookieCart != null && cookieCart.getStatus() == OrderStatus.CART) {
+
+                if (userId != null && userId > 0) {
+                    // намери налична CART кошница за user-а (вземи най-новата)
+                    Order userCart = null;
+                    for (var o : orderDao.findByUserId(userId)) {
+                        if (o.getStatus() == OrderStatus.CART) {
+                            if (userCart == null || o.getId() > userCart.getId()) userCart = o;
+                        }
+                    }
+
+                    if (userCart != null) {
+                        // ако cookieCart не е същата като userCart -> MERGE + CLEANUP
+                        if (cookieCart.getId() != userCart.getId()) {
+                            mergeCartItems(cookieCart.getId(), userCart.getId());
+                            deleteOrderCompletely(cookieCart.getId()); // ⬅️ почистване на излишната поръчка
+                        }
+                        return userCart.getId();
+                    } else {
+                        // user още няма кошница -> закачаме cookieCart към него
+                        if (cookieCart.getUserId() == null) {
+                            cookieCart.setUserId(userId);
+                            orderDao.update(cookieCart);
+                        }
+                        return cookieCart.getId();
+                    }
+                }
+
+                // гост + валидно cookie
+                return cookieCart.getId();
+            }
         }
+
+        // без валидно cookie
         if (userId != null && userId > 0) {
             for (var o : orderDao.findByUserId(userId)) {
                 if (o.getStatus() == OrderStatus.CART) return o.getId();
@@ -41,6 +73,7 @@ public class CartService {
             orderDao.save(created);
             return created.getId();
         }
+
         var created = new Order();
         created.setUserId(null);
         created.setStatus(OrderStatus.CART);
@@ -65,6 +98,34 @@ public class CartService {
                         c.getAction().name()
                 ));
             }
+
+            String name;
+            String imageUrl;
+            String type;
+            String variantLabel = null;
+
+            if (it.getPizzaVariantId() != null) {
+                var pizza = pizzaDao.findById(it.getProductId());
+                name = (pizza != null && pizza.getName() != null) ? pizza.getName() : "Pizza";
+                imageUrl = (pizza != null) ? pizza.getImageUrl() : null;
+                type = "pizza";
+
+                var variant = variantDao.findById(it.getPizzaVariantId());
+                if (variant != null) {
+                    String size  = (variant.getSize()  != null) ? variant.getSize().name().toLowerCase()  : null;
+                    String dough = (variant.getDough() != null) ? variant.getDough().name().toLowerCase() : null;
+                    if (size != null && dough != null)       variantLabel = size + " · " + dough;
+                    else if (size != null)                   variantLabel = size;
+                    else if (dough != null)                  variantLabel = dough;
+                }
+            } else {
+                // Напитка
+                var drink = drinkDao.findById(it.getProductId());
+                name = (drink != null && drink.getName() != null) ? drink.getName() : "Drink";
+                imageUrl = (drink != null) ? drink.getImageUrl() : null;
+                type = "drink";
+            }
+
             var line = it.getUnitPrice().multiply(BigDecimal.valueOf(it.getQuantity()));
             total = total.add(line);
 
@@ -75,7 +136,11 @@ public class CartService {
                     it.getQuantity(),
                     it.getUnitPrice(),
                     it.getNote(),
-                    cv
+                    cv,
+                    name,
+                    imageUrl,
+                    type,
+                    variantLabel
             ));
         }
 
@@ -95,6 +160,7 @@ public class CartService {
 
         var oi = baseItem(orderId, productId, null, qty, d.getPrice(), note);
         if (!itemDao.save(oi)) throw new IllegalStateException("create_failed");
+        orderDao.touch(orderId);
         return oi;
     }
 
@@ -148,13 +214,15 @@ public class CartService {
                 custDao.add(new OrderCustomization(oi, ingredient(ing), CustomizationAction.ADD));
             }
         }
-
+        orderDao.touch(orderId);
         return oi;
     }
 
     public void setQuantity(int itemId, int qty) {
+        var it = itemDao.findById(itemId);
         if (qty <= 0) throw new IllegalArgumentException("qty_invalid");
         if (!itemDao.updateQuantity(itemId, qty)) throw new IllegalStateException("update_failed");
+        orderDao.touch(it.getOrder().getId());
     }
 
     public void setVariant(int itemId, Integer variantId) {
@@ -179,22 +247,28 @@ public class CartService {
         if (!((OrderItemDaoImpl) itemDao).updateVariantAndPrice(itemId, toSet, unit)) {
             throw new IllegalStateException("update_failed");
         }
+        orderDao.touch(it.getOrder().getId());
     }
 
     public void setNote(int itemId, String note) {
+        var it = itemDao.findById(itemId);
         if (!((OrderItemDaoImpl) itemDao).updateNote(itemId, note)) {
             throw new IllegalStateException("update_failed");
         }
+        orderDao.touch(it.getOrder().getId());
     }
 
     public void removeItem(int itemId) {
         if (!itemDao.delete(itemId)) throw new IllegalStateException("delete_failed");
+        var it = itemDao.findById(itemId);
+        orderDao.touch(it.getOrder().getId());
     }
 
     public void setDeliveryInfo(int orderId, String phone, String address) {
         if (!orderDao.setDeliveryInfo(orderId, phone, address)) {
             throw new IllegalStateException("cannot_set_delivery_info");
         }
+        orderDao.touch(orderId);
     }
 
     public void checkout(int orderId) {
@@ -206,6 +280,7 @@ public class CartService {
             throw new IllegalStateException("cannot_checkout");
         if (!orderDao.setOrderedNow(orderId))
             throw new IllegalStateException("cannot_set_ordered_at");
+        orderDao.touch(orderId);
     }
 
 
@@ -235,6 +310,7 @@ public class CartService {
             throw new IllegalStateException("cannot_cancel");
         if (!orderDao.setCancelledNow(orderId))
             throw new IllegalStateException("cannot_set_cancelled_at");
+        orderDao.touch(orderId);
     }
 
     private void transition(int orderId, OrderStatus requiredCurrent, OrderStatus target, String err) {
@@ -243,6 +319,7 @@ public class CartService {
         if (o.getStatus() != requiredCurrent) throw new IllegalStateException("invalid_status_transition");
         if (!orderDao.updateStatus(orderId, target.name().toLowerCase()))
             throw new IllegalStateException(err);
+        orderDao.touch(orderId);
     }
 
     private static OrderItem baseItem(int orderId, int productId, Integer variantId,
@@ -256,5 +333,39 @@ public class CartService {
         var i = new Ingredient();
         i.setId(id);
         return i;
+    }
+    private void mergeCartItems(int fromOrderId, int toOrderId) {
+        if (fromOrderId == toOrderId) return;
+
+        var fromRows = itemDao.findByOrderId(fromOrderId);
+        for (var it : fromRows) {
+            var copy = baseItem(
+                    toOrderId,
+                    it.getProductId(),
+                    it.getPizzaVariantId(),
+                    it.getQuantity(),
+                    it.getUnitPrice(),
+                    it.getNote()
+            );
+            itemDao.save(copy);
+            try {
+                itemDao.delete(it.getId());
+            } catch (Exception ignored) {
+            }
+        }
+    }
+    private void deleteOrderCompletely(int orderId) {
+        var rows = itemDao.findByOrderId(orderId);
+        for (var it : rows) {
+            var custs = custDao.findByOrderItemId(it.getId());
+            for (var c : custs) {
+                custDao.remove(c.getId());
+            }
+        }
+        rows = itemDao.findByOrderId(orderId);
+        for (var it : rows) {
+            itemDao.delete(it.getId());
+        }
+        orderDao.delete(orderId);
     }
 }

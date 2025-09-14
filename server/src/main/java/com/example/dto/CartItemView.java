@@ -9,5 +9,9 @@ public record CartItemView(
         int quantity,
         BigDecimal unitPrice,
         String note,
-        List<CartCustomizationView> customizations
+        List<CartCustomizationView> customizations,
+        String name,
+        String imageUrl,
+        String type,
+        String variantLabel
 ) {}

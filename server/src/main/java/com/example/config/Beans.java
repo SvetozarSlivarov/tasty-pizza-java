@@ -23,8 +23,8 @@ public class Beans {
     public final IngredientTypeController ingredientTypeCtl;
     public final DrinkController drinkCtl;
     public final CartController cartCtl;
-
     public final OrderController orderCtl;
+    public final MaintenanceController maintenanceController;
 
     private final StorageService storageService;
 
@@ -76,6 +76,7 @@ public class Beans {
         this.drinkCtl          = new DrinkController(drinks, jwt);
         this.cartCtl           = new CartController(cartService, jwt);
         this.orderCtl          = new OrderController(cartService, jwt);
+        this.maintenanceController = new MaintenanceController(jwt);
     }
 
     private static Dotenv tryLoadDotenv() {

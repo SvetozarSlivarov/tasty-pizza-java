@@ -20,13 +20,16 @@ public class JwtService {
         this.ttlSeconds = ttlSeconds;
     }
 
-    public String issue(String username, String role) {
+    public String issue(int id, String username, String role) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(ttlSeconds)))
-                .claims(Map.of("role", role))
+                .claims(Map.of(
+                        "role", role,
+                        "id", id
+                ))
                 .signWith(key)
                 .compact();
     }

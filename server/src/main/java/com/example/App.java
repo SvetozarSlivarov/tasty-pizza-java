@@ -4,6 +4,7 @@ import com.example.config.Beans;
 import com.example.config.ServerConfig;
 import com.example.db.DatabaseInitializer;
 import com.example.server.RouteRegistrar;
+import com.example.utils.CartJanitor;
 import com.sun.net.httpserver.HttpServer;
 
 import java.net.InetSocketAddress;
@@ -25,5 +26,7 @@ public class App {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { System.out.println("\nShutting down..."); server.stop(1); }));
         System.out.println("HTTP server listening on http://localhost:" + cfg.port());
         server.start();
+        CartJanitor janitor = CartJanitor.defaultInstance();
+        janitor.start();
     }
 }

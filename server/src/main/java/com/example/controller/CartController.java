@@ -20,14 +20,18 @@ public class CartController {
 
     // GET /api/cart
     public void handleGet(HttpExchange ex) throws IOException {
-        HttpUtils.requireMethod(ex, "GET");
+        if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) { HttpUtils.methodNotAllowed(ex, "GET"); return; }
+
         Integer userId = HttpUtils.tryGetUserId(ex, jwt);
-        Integer cartId = HttpUtils.tryGetCookieInt(ex, "cartId");
+        Integer cartIdHint = HttpUtils.tryGetCookieInt(ex, "cartId");
 
-        int orderId = cart.ensureCart(userId, cartId);
-        ensureCartCookie(ex, cartId, orderId);
+        int cartId = cart.ensureCart(userId, cartIdHint);
 
-        CartView view = cart.getCart(orderId);
+        if (cartIdHint == null || !cartIdHint.equals(cartId)) {
+            HttpUtils.setCookie(ex, "cartId", String.valueOf(cartId), 60 * 60 * 24 * 30);
+        }
+
+        var view = cart.getCart(cartId);
         HttpUtils.sendJson(ex, 200, view);
     }
 

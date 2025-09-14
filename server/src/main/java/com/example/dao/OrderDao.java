@@ -2,6 +2,7 @@ package com.example.dao;
 
 import com.example.model.Order;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface OrderDao {
@@ -23,6 +24,10 @@ public interface OrderDao {
     boolean setCancelledNow(int id);
 
     boolean setDeliveryInfo(int id, String phone, String address);
+
+    void touch(int orderId);
+
+    int deleteGuestCartsOlderThan(Instant cutoff);
 
     boolean delete(int id);
 }
