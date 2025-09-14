@@ -1,16 +1,30 @@
 // src/pages/Home.jsx
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import "../styles/modal.css";
 import "../styles/home.css";
-import { catalogApi } from "../api/catalog";
+import { catalogApi, productApi } from "../api/catalog";
+import { useCart } from "../context/CartContext";
+import QuickModal from "../components/QuickModal";
 
 const FallbackImg = "images/fallBackImg.png";
 
 export default function Home() {
+    const navigate = useNavigate();
+    const cart = useCart();
+
     const [latestPizzas, setLatestPizzas] = useState([]);
     const [latestDrinks, setLatestDrinks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState(null);
+
+    // Quick modal state
+    const [quickItem, setQuickItem] = useState(null);
+    const [quickPizza, setQuickPizza] = useState(null);
+    const [quickVariantId, setQuickVariantId] = useState(null);
+    const [quickLoading, setQuickLoading] = useState(false);
+    const [quickError, setQuickError] = useState(null);
+    const [adding, setAdding] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -18,8 +32,8 @@ export default function Home() {
             try {
                 setLoading(true);
                 const [pz, dr] = await Promise.all([
-                    catalogApi.pizzas(true),   // взимаме налични пици
-                    catalogApi.drinks(true),   // и налични напитки
+                    catalogApi.pizzas(true),
+                    catalogApi.drinks(true),
                 ]);
 
                 if (!mounted) return;
@@ -29,13 +43,71 @@ export default function Home() {
                 setLatestDrinks((dr ?? []).slice().sort(byIdDesc).slice(0, 3));
             } catch (e) {
                 console.error(e);
-                setErr(e?.message || "Неуспешно зареждане");
+                setErr(e?.message || "Failed to load");
             } finally {
                 if (mounted) setLoading(false);
             }
         })();
-        return () => { mounted = false; };
+        return () => {
+            mounted = false;
+        };
     }, []);
+
+    const onAddToCart = async (item, variant = null) => {
+        try {
+            setAdding(true);
+            if (item?.basePrice != null) {
+                let v = variant;
+                if (!v) {
+                    const p = await productApi.pizza(item.id, true);
+                    v = Array.isArray(p?.variants) && p.variants.length ? p.variants[0] : null;
+                }
+                await cart.addPizza({
+                    productId: item.id,
+                    variantId: v ? v.id : null,
+                    quantity: 1,
+                    removeIngredientIds: [],
+                    addIngredientIds: [],
+                });
+            } else {
+                await cart.addDrink({ productId: item.id, quantity: 1 });
+            }
+            setQuickItem(null);
+        } catch (e) {
+            alert(e?.data?.error || e?.message || "Failed to add to cart");
+        } finally {
+            setAdding(false);
+        }
+    };
+
+    const openQuickModal = async (item) => {
+        setQuickItem(item);
+        setQuickError(null);
+        setQuickPizza(null);
+        setQuickVariantId(null);
+
+        if (item?.basePrice != null) {
+            try {
+                setQuickLoading(true);
+                const p = await productApi.pizza(item.id, true);
+                setQuickPizza(p);
+                if (p?.variants?.length) setQuickVariantId(String(p.variants[0].id));
+            } catch (e) {
+                setQuickError(
+                    e?.data?.error || e?.message || "Failed to load pizza details."
+                );
+            } finally {
+                setQuickLoading(false);
+            }
+        }
+    };
+
+    const closeQuickModal = () => setQuickItem(null);
+
+    const goDetails = (item) => {
+        const path = item?.basePrice != null ? `/pizza/${item.id}` : `/drink/${item.id}`;
+        navigate(path);
+    };
 
     return (
         <div className="home">
@@ -43,21 +115,29 @@ export default function Home() {
             <section className="hero">
                 <div className="hero-content">
                     <p className="eyebrow">Fresh • Fast • Hot</p>
-                    <h1>Tasty <span>Pizza</span> in minutes</h1>
+                    <h1>
+                        Tasty <span>Pizza</span> in minutes
+                    </h1>
                     <p className="sub">
                         Hand-tossed dough, premium ingredients, stone-baked perfection.
                         Order now and get your pizza in under 30 minutes.
                     </p>
                     <div className="cta-row">
-                        <Link to="/menu" className="btn primary">Order now</Link>
-                        <a href="#why" className="btn ghost">Learn more</a>
+                        <Link to="/menu" className="btn primary">
+                            Order now
+                        </Link>
+                        <a href="#why" className="btn ghost">
+                            Learn more
+                        </a>
                     </div>
                 </div>
             </section>
 
             {/* WHY */}
             <section id="why" className="why">
-                <h2>Why choose <span>Tasty Pizza</span>?</h2>
+                <h2>
+                    Why choose <span>Tasty Pizza</span>?
+                </h2>
                 <div className="why-grid">
                     <article>
                         <div className="ic">🔥</div>
@@ -84,7 +164,9 @@ export default function Home() {
 
                     {loading && (
                         <div className="skeleton-grid">
-                            {Array.from({ length: 3 }).map((_, i) => <div className="skeleton-card" key={i} />)}
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <div className="skeleton-card" key={i} />
+                            ))}
                         </div>
                     )}
 
@@ -92,17 +174,32 @@ export default function Home() {
 
                     {!loading && !err && (
                         <div className="grid">
-                            {latestPizzas.map(p => (
-                                <article className="card" key={p.id}>
+                            {latestPizzas.map((p) => (
+                                <article
+                                    className="card card--clickable"
+                                    key={p.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => openQuickModal(p)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") openQuickModal(p);
+                                    }}
+                                >
                                     <div className="thumb">
-                                        <img src={p.imageUrl || FallbackImg} alt={p.name} loading="lazy" />
+                                        <img
+                                            src={p.imageUrl || FallbackImg}
+                                            alt={p.name}
+                                            loading="lazy"
+                                        />
                                     </div>
                                     <div className="body">
                                         <h3 className="title">{p.name}</h3>
                                         {p.description && <p className="desc">{p.description}</p>}
                                         <div className="meta">
-                                            <span className="price">from {Number(p.basePrice ?? p.price).toFixed(2)} EUR</span>
-                                            {p.spicyLevel && <span className="badge">{p.spicyLevel}</span>}
+                                    <span className="price">
+                                        from {Number(p.basePrice ?? p.price).toFixed(2)} EUR
+                                    </span>
+                                            {p.spicyLevel && <span className="badge">Spicy level: {p.spicyLevel}</span>}
                                         </div>
                                     </div>
                                 </article>
@@ -119,22 +216,39 @@ export default function Home() {
 
                     {loading && (
                         <div className="skeleton-grid">
-                            {Array.from({ length: 3 }).map((_, i) => <div className="skeleton-card" key={i} />)}
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <div className="skeleton-card" key={i} />
+                            ))}
                         </div>
                     )}
 
                     {!loading && !err && (
                         <div className="grid drinks">
-                            {latestDrinks.map(d => (
-                                <article className="card" key={d.id}>
+                            {latestDrinks.map((d) => (
+                                <article
+                                    className="card card--clickable"
+                                    key={d.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => openQuickModal(d)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") openQuickModal(d);
+                                    }}
+                                >
                                     <div className="thumb">
-                                        <img src={d.imageUrl || FallbackImg} alt={d.name} loading="lazy" />
+                                        <img
+                                            src={d.imageUrl || FallbackImg}
+                                            alt={d.name}
+                                            loading="lazy"
+                                        />
                                     </div>
                                     <div className="body">
                                         <h3 className="title">{d.name}</h3>
                                         {d.description && <p className="desc">{d.description}</p>}
                                         <div className="meta">
-                                            <span className="price">{Number(d.price).toFixed(2)} EUR</span>
+                      <span className="price">
+                        {Number(d.price).toFixed(2)} EUR
+                      </span>
                                         </div>
                                     </div>
                                 </article>
@@ -143,7 +257,9 @@ export default function Home() {
                     )}
 
                     <div className="more-row">
-                        <Link className="btn link" to="/menu">See all →</Link>
+                        <Link to="/menu" className="home-see-more-btn">
+                            See all <span className="home-arr" aria-hidden="true">→</span>
+                        </Link>
                     </div>
                 </div>
             </section>
@@ -151,11 +267,34 @@ export default function Home() {
             <section className="testimonials">
                 <h2>What our customers say</h2>
                 <div className="quotes">
-                    <blockquote>“Best crust in town!” <cite>— Mira</cite></blockquote>
-                    <blockquote>“Arrived in 22 minutes. Hot and juicy.” <cite>— Ivan</cite></blockquote>
-                    <blockquote>“My favorite Pepperoni. Perfect balance.” <cite>— George</cite></blockquote>
+                    <blockquote>
+                        “Best crust in town!” <cite>— Mira</cite>
+                    </blockquote>
+                    <blockquote>
+                        “Arrived in 22 minutes. Hot and juicy.” <cite>— Ivan</cite>
+                    </blockquote>
+                    <blockquote>
+                        “My favorite Pepperoni. Perfect balance.” <cite>— George</cite>
+                    </blockquote>
                 </div>
             </section>
+
+            {quickItem && (
+                <QuickModal
+                    item={quickItem}
+                    pizzaDetails={quickPizza}
+                    selectedVariantId={quickVariantId}
+                    setSelectedVariantId={setQuickVariantId}
+                    onAdd={onAddToCart}
+                    onDetails={goDetails}
+                    onClose={closeQuickModal}
+                    loading={quickLoading}
+                    error={quickError}
+                    adding={adding}
+                    currency="BGN"
+                    fallbackSrc={FallbackImg}
+                />
+            )}
         </div>
     );
 }

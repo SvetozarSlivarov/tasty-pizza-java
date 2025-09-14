@@ -88,17 +88,6 @@
 .footer-bottom .legal{ display: flex; gap: 10px; align-items: center; }
 .footer-bottom .legal a{ color: rgba(255,255,255,.85); text-decoration: none; }
 .footer-bottom .legal a:hover{ color: #fff; }
-
-/* back-to-top button */
-.to-top{
-    position: absolute; right: 16px; bottom: 70px;
-    width: 40px; height: 40px; border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.12);
-    background: rgba(255,255,255,.06);
-    color: #fff; cursor: pointer;
-    backdrop-filter: blur(6px);
-    transition: transform .15s ease, background .15s ease;
-}
 .to-top:hover{ transform: translateY(-2px); background: rgba(255,255,255,.1); }
 
 /* responsive */
@@ -115,5 +104,4 @@
         flex-direction: column;
         text-align: center;
     }
-    .to-top{ right: 12px; bottom: 88px; }
 }

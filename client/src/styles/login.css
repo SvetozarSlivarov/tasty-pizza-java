@@ -8,7 +8,7 @@
 }
 
 .auth-page{
-    min-height: calc(100vh - 76px); /* navbar spacer */
+    min-height: calc(100vh - 76px);
     display: grid;
     place-items: center;
     padding: 24px 16px 40px;

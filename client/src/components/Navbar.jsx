@@ -57,7 +57,19 @@ export default function Navbar() {
                             <>
                                 <NavLink to="/profile" className={navClass}>Profile</NavLink>
                                 {isAdmin && <NavLink to="/admin" className={navClass}>Admin</NavLink>}
-                                <button className="linklike" type="button" onClick={handleSignOut}>Sign out</button>
+                                <button
+                                    className="nav-bar-logout-btn"
+                                    type="button"
+                                    onClick={handleSignOut}
+                                    aria-label="Sign out"
+                                >
+                                    <svg className="ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                        <polyline points="16 17 21 12 16 7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                    </svg>
+                                    <span className="txt">Sign out</span>
+                                </button>
                             </>
                         )}
                     </nav>

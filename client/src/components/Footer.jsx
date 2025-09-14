@@ -18,7 +18,6 @@ export default function Footer() {
                     </p>
                 </div>
 
-                {/* Navigation */}
                 <nav className="footer-col">
                     <h4>Explore</h4>
                     <ul>
@@ -39,7 +38,6 @@ export default function Footer() {
                     </ul>
                 </div>
 
-                {/* Social */}
                 <div className="footer-col">
                     <h4>Follow us</h4>
                     <div className="social">
@@ -67,8 +65,6 @@ export default function Footer() {
                 </div>
             </div>
 
-            {/* Back to top */}
-            <button className="to-top" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Back to top">↑</button>
         </footer>
     );
 }

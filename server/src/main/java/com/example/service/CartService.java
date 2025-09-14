@@ -259,9 +259,9 @@ public class CartService {
     }
 
     public void removeItem(int itemId) {
-        if (!itemDao.delete(itemId)) throw new IllegalStateException("delete_failed");
         var it = itemDao.findById(itemId);
         orderDao.touch(it.getOrder().getId());
+        if (!itemDao.delete(itemId)) throw new IllegalStateException("delete_failed");
     }
 
     public void setDeliveryInfo(int orderId, String phone, String address) {

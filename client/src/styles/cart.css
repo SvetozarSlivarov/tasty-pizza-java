@@ -82,14 +82,14 @@
 .btn.outline:hover { background:#e63946; color:#fff; }
 
 .cart-fab {
-    position: fixed; right: 18px; bottom: 18px; z-index: 1000;
+    position: fixed; right: 18px; bottom: 18px; z-index: 800;
     width: 56px; height: 56px; border-radius: 50%;
     display: grid; place-items: center;
     background:#e63946; color:#fff; border:0; cursor:pointer;
     box-shadow: 0 8px 24px rgba(0,0,0,.35);
     font-size: 22px;
 }
-.cart-fab:hover { background:#d62828; }
+.cart-fab:hover { background:#d62828;}
 .cart-badge {
     position: absolute; top: -6px; right: -6px;
     background:#111316; color:#fff; border:2px solid #e63946;

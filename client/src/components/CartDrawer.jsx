@@ -7,7 +7,6 @@ export default function CartDrawer() {
 
     useEffect(() => {
         if (cart.isOpen) cart.refresh().catch(() => {});
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [cart.isOpen]);
 
     return (
@@ -37,7 +36,6 @@ export default function CartDrawer() {
 
                     {!cart.loading && cart.items.length > 0 && (
                         <ul className="cart-list">
-                            {console.log(cart.items)}
                             {cart.items.map((it) => (
                                 <li key={it.id} className="cart-item">
                                     <div className="ci-media">
@@ -95,7 +93,7 @@ export default function CartDrawer() {
                             className="btn primary"
                             onClick={async () => {
                                 try {
-                                    // TODO: ако имаш форма — попитай за телефон/адрес
+                                    // TODO: add form address and phone number
                                     await cart.checkout({ phone: "", address: "" });
                                     alert("Order placed! ✅");
                                 } catch (e) {

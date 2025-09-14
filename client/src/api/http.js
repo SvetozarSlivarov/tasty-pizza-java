@@ -9,7 +9,6 @@ export const tokenStore = {
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
-// --- helpers ---
 function ensureLeadingSlash(path) {
     if (/^https?:\/\//i.test(path)) return path;
     return path.startsWith("/") ? path : `/${path}`;
@@ -45,7 +44,6 @@ function makeHeaders(body, extra) {
     return { ...base, ...(extra || {}) };
 }
 
-// --- core request ---
 export async function request(path, { method = "GET", body, headers, signal, timeoutMs } = {}) {
     const url = buildUrl(path);
     const controller = new AbortController();
@@ -66,7 +64,6 @@ export async function request(path, { method = "GET", body, headers, signal, tim
         cache: "no-store",
     }).finally(() => clearTimeout(timeout));
 
-    // 204 No Content → връщаме null
     if (res.status === 204) {
         if (!res.ok) {
             const err = new Error(`${res.status} ${res.statusText}`);
@@ -97,7 +94,6 @@ export async function request(path, { method = "GET", body, headers, signal, tim
     return data;
 }
 
-// --- convenience API ---
 export const http = {
     get:   (p,   opt) => request(p,             { ...opt, method: "GET" }),
     post:  (p,b, opt) => request(p,             { ...opt, method: "POST",  body: b }),

@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { catalogApi, productApi } from "../api/catalog";
 import { useCart } from "../context/CartContext";
 import "../styles/menu.css";
+import "../styles/modal.css"
+import QuickModal from "../components/QuickModal";
 
 const FallbackImg = "images/fallBackImg.png";
 
@@ -107,103 +109,6 @@ function ProductCard({ item, onOpenQuick, ctaLabel = "Add", onAdd }) {
         </div>
     );
 }
-function QuickModal({
-                        item,
-                        pizzaDetails,
-                        selectedVariantId,
-                        setSelectedVariantId,
-                        onAdd,
-                        onDetails,
-                        onClose,
-                        loading,
-                        error,
-                        adding,
-                    }) {
-    const isPizza = !!item?.basePrice;
-
-    const base = Number(pizzaDetails?.basePrice ?? item?.basePrice ?? 0);
-    const selectedVariant = pizzaDetails?.variants?.find(
-        (v) => String(v.id) === String(selectedVariantId)
-    );
-    const extra = Number(selectedVariant?.extraPrice || 0);
-    const finalPrice = (base + extra).toFixed(2);
-    const variantLabel = (v) =>
-        v?.name || [v?.size, v?.dough].filter(Boolean).join(" · ");
-
-    return (
-        <div className="modal-backdrop" onClick={onClose}>
-            <div className="modal-window" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close" onClick={onClose} aria-label="Close">
-                    ×
-                </button>
-
-                <div className="modal-header">
-                    <img src={item?.imageUrl || FallbackImg} alt={item?.name} />
-                    <div>
-                        <h3>{item?.name}</h3>
-                        {item?.description && <p className="muted">{item.description}</p>}
-                    </div>
-                </div>
-
-                {loading && <p>Loading…</p>}
-                {error && <p className="alert error">{error}</p>}
-
-                {isPizza && !loading && !error && (
-                    <div className="modal-body">
-                        {pizzaDetails?.variants?.length ? (
-                            <>
-                                <label className="block">
-                                    Variant:
-                                    <select
-                                        value={selectedVariantId ?? ""}
-                                        onChange={(e) => setSelectedVariantId(e.target.value)}
-                                    >
-                                        {pizzaDetails.variants.map((v) => (
-                                            <option key={v.id} value={v.id}>
-                                                {variantLabel(v)}
-                                                {Number(v.extraPrice) > 0
-                                                    ? ` (+${Number(v.extraPrice).toFixed(2)} BGN)`
-                                                    : ""}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <div className="price-row">
-                                    <span>Total:</span>
-                                    <strong>{finalPrice} BGN</strong>
-                                </div>
-                            </>
-                        ) : (
-                            <p className="muted">No variants available.</p>
-                        )}
-                    </div>
-                )}
-
-                {!isPizza && !loading && !error && (
-                    <div className="modal-body">
-                        <div className="price-row">
-                            <span>Price:</span>
-                            <strong>{Number(item?.price || 0).toFixed(2)} BGN</strong>
-                        </div>
-                    </div>
-                )}
-
-                <div className="modal-actions">
-                    <button
-                        className="btn primary"
-                        onClick={() => onAdd(item, selectedVariant)}
-                        disabled={loading || adding}
-                    >
-                        {adding ? "Adding…" : "Add to cart"}
-                    </button>
-                    <button className="btn outline" onClick={() => onDetails(item)}>
-                        Details
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
 
 export default function Menu() {
     const navigate = useNavigate();
@@ -215,8 +120,8 @@ export default function Menu() {
     const [query, setQuery] = useState("");
 
     // modal state
-    const [quickItem, setQuickItem] = useState(null); // {id, name, ...}
-    const [quickPizza, setQuickPizza] = useState(null); // pizza details with variants
+    const [quickItem, setQuickItem] = useState(null);
+    const [quickPizza, setQuickPizza] = useState(null);
     const [quickVariantId, setQuickVariantId] = useState(null);
     const [quickLoading, setQuickLoading] = useState(false);
     const [quickError, setQuickError] = useState(null);
@@ -410,7 +315,6 @@ export default function Menu() {
                 </>
             )}
 
-
             {quickItem && (
                 <QuickModal
                     item={quickItem}
@@ -423,6 +327,8 @@ export default function Menu() {
                     loading={quickLoading}
                     error={quickError}
                     adding={adding}
+                    currency="BGN"
+                    fallbackSrc={FallbackImg}
                 />
             )}
         </div>

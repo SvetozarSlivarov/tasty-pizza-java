@@ -7,7 +7,7 @@ const CartContext = createContext(null);
 const initialState = {
     isOpen: false,
     loading: false,
-    items: [],       // [{ id, name, imageUrl, qty, unitPrice, type, variantLabel }]
+    items: [],
     subtotal: 0,
     orderId: null,
     status: null,
@@ -69,10 +69,8 @@ export function CartProvider({ children }) {
         }
     }, []);
 
-    // зареди кошницата при първо монтиране
     useEffect(() => { refresh(); }, [refresh]);
 
-    // публичен API
     const api = useMemo(() => ({
         // UI
         isOpen: state.isOpen,
@@ -80,7 +78,6 @@ export function CartProvider({ children }) {
         close: () => dispatch({ type: "CLOSE" }),
         toggle: () => dispatch({ type: state.isOpen ? "CLOSE" : "OPEN" }),
 
-        // данни
         loading: state.loading,
         error: state.error,
         items: state.items,
