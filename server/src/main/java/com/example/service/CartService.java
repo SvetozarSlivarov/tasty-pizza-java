@@ -182,21 +182,28 @@ public class CartService {
             unit = unit.add(v.getExtraPrice());
             toSet = v.getId();
         }
+        var toRemove = new java.util.LinkedHashSet<>(removeIds != null ? removeIds : java.util.List.<Integer>of());
+        var toAdd    = new java.util.LinkedHashSet<>(addIds    != null ? addIds    : java.util.List.<Integer>of());
 
-        if (removeIds != null && !removeIds.isEmpty()) {
+        for (Integer id : toRemove) {
+            if (toAdd.contains(id)) {
+                throw new IllegalArgumentException("ingredient_in_both_add_and_remove");
+            }
+        }
+        if (!toRemove.isEmpty()) {
             var base = pizzaIngredientDao.findByPizzaId(productId);
             var removable = new java.util.HashMap<Integer, Boolean>();
             for (var l : base) removable.put(l.getIngredientId(), l.isRemovable());
-            for (Integer ing : removeIds) {
+            for (Integer ing : toRemove) {
                 Boolean ok = removable.get(ing);
                 if (ok == null) throw new IllegalArgumentException("remove_not_in_base");
                 if (!ok) throw new IllegalArgumentException("remove_not_removable");
             }
         }
 
-        if (addIds != null && !addIds.isEmpty()) {
+        if (!toAdd.isEmpty()) {
             var allowed = new HashSet<>(allowedDao.findIngredientIdsByPizzaId(productId));
-            for (Integer ing : addIds) {
+            for (Integer ing : toAdd) {
                 if (!allowed.contains(ing)) throw new IllegalArgumentException("add_not_allowed");
             }
         }
@@ -204,16 +211,17 @@ public class CartService {
         var oi = baseItem(orderId, productId, toSet, qty, unit, note);
         if (!itemDao.save(oi)) throw new IllegalStateException("create_failed");
 
-        if (removeIds != null) {
-            for (Integer ing : removeIds) {
+        if (!toRemove.isEmpty()) {
+            for (Integer ing : toRemove) {
                 custDao.add(new OrderCustomization(oi, ingredient(ing), com.example.model.enums.CustomizationAction.REMOVE));
             }
         }
-        if (addIds != null) {
-            for (Integer ing : addIds) {
+        if (!toAdd.isEmpty()) {
+            for (Integer ing : toAdd) {
                 custDao.add(new OrderCustomization(oi, ingredient(ing), CustomizationAction.ADD));
             }
         }
+
         orderDao.touch(orderId);
         return oi;
     }

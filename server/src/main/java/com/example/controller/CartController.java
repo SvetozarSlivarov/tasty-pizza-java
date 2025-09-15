@@ -59,16 +59,20 @@ public class CartController {
         ensureCartCookie(ex, cartId, orderId);
 
         AddPizzaToCartRequest req = HttpUtils.parseJson(ex, AddPizzaToCartRequest.class);
-        var item = cart.addPizza(
-                orderId,
-                req.productId(),
-                req.variantId(),
-                req.quantity(),
-                req.note(),
-                req.removeIngredientIds(),
-                req.addIngredientIds()
-        );
-        HttpUtils.sendJson(ex, 201, Map.of("itemId", item.getId()));
+        try {
+            var item = cart.addPizza(
+                    orderId,
+                    req.productId(),
+                    req.variantId(),
+                    req.quantity(),
+                    req.note(),
+                    req.removeIngredientIds(),
+                    req.addIngredientIds()
+            );
+            HttpUtils.sendJson(ex, 201, Map.of("itemId", item.getId()));
+        } catch (IllegalArgumentException e) {
+            HttpUtils.sendJson(ex, 400, Map.of("error", e.getMessage()));
+        }
     }
 
     // PATCH /api/cart/items/{id}
