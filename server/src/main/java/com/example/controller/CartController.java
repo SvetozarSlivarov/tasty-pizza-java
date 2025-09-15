@@ -78,13 +78,24 @@ public class CartController {
     // PATCH /api/cart/items/{id}
     public void handleUpdateItem(HttpExchange ex, int itemId) throws IOException {
         HttpUtils.requireMethod(ex, "PATCH");
-        UpdateCartItemRequest req = HttpUtils.parseJson(ex, UpdateCartItemRequest.class);
 
-        if (req.quantity() != null) cart.setQuantity(itemId, req.quantity());
-        if (req.variantId() != null) cart.setVariant(itemId, req.variantId());
-        if (req.note() != null) cart.setNote(itemId, req.note());
+        try {
+            UpdateCartItemRequest req = HttpUtils.parseJson(ex, UpdateCartItemRequest.class);
 
-        HttpUtils.sendStatus(ex, 204);
+            if (req.quantity() != null)   cart.setQuantity(itemId, req.quantity());
+            if (req.variantId() != null)  cart.setVariant(itemId, req.variantId());
+            if (req.note() != null)       cart.setNote(itemId, req.note());
+
+            if (req.removeIngredientIds() != null || req.addIngredientIds() != null) {
+                var toRemove = (req.removeIngredientIds() != null) ? req.removeIngredientIds() : java.util.List.<Integer>of();
+                var toAdd    = (req.addIngredientIds()    != null) ? req.addIngredientIds()    : java.util.List.<Integer>of();
+                cart.replacePizzaCustomizations(itemId, toRemove, toAdd);
+            }
+
+            HttpUtils.sendStatus(ex, 204);
+        } catch (IllegalArgumentException e) {
+            HttpUtils.sendJson(ex, 400, Map.of("error", e.getMessage()));
+        }
     }
 
     // DELETE /api/cart/items/{id}

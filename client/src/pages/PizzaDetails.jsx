@@ -1,12 +1,18 @@
-import { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { productApi } from "../api/catalog";
 import { cartApi } from "../api/cart";
+import { useCart } from "../context/CartContext";
 import "../styles/details.css";
 
 export default function PizzaDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [params] = useSearchParams();
+    const editItemId = params.get("editItemId");
+    const isEdit = !!editItemId;
+
+    const cart = useCart();
 
     const [pizza, setPizza] = useState(null);
     const [ingredients, setIngredients] = useState([]);
@@ -55,10 +61,9 @@ export default function PizzaDetails() {
                     name: a?.name ?? "",
                 })) : []);
 
-                if (p?.variants?.length) {
-                    setSelectedVariant(p.variants[0]);
-                } else {
-                    setSelectedVariant(null);
+                if (!isEdit) {
+                    if (p?.variants?.length) setSelectedVariant(p.variants[0]);
+                    else setSelectedVariant(null);
                 }
             } catch (e) {
                 if (!mounted) return;
@@ -68,17 +73,61 @@ export default function PizzaDetails() {
                 if (mounted) setLoading(false);
             }
         }
-
         load();
         return () => { mounted = false; };
-    }, [id]);
+    }, [id, isEdit]);
+
+    useEffect(() => {
+        if (!isEdit || !pizza) return;
+
+        async function prefill() {
+            let item = cart.items.find(i => String(i.id) === String(editItemId));
+            if (!item) {
+                try { await cart.refresh(); } catch {}
+                item = cart.items.find(i => String(i.id) === String(editItemId));
+            }
+            if (!item) {
+                setError("Cart item not found or expired.");
+                return;
+            }
+            if (String(item.productId) !== String(id)) {
+                setError("This cart item belongs to different product.");
+                return;
+            }
+
+            const rem = new Set(
+                (item.customizations || [])
+                    .filter(c => (c.action || "").toLowerCase() === "remove")
+                    .map(c => c.ingredientId)
+            );
+            const add = new Set(
+                (item.customizations || [])
+                    .filter(c => (c.action || "").toLowerCase() === "add")
+                    .map(c => c.ingredientId)
+            );
+
+            setRemoveIds(rem);
+            setAddIds(add);
+            setQty(item.quantity ?? 1);
+            setNote(item.note ?? "");
+
+            if (pizza.variants?.length) {
+                const v = pizza.variants.find(v => Number(v.id) === Number(item.pizzaVariantId));
+                setSelectedVariant(v || null);
+            } else {
+                setSelectedVariant(null);
+            }
+        }
+
+        prefill();
+    }, [isEdit, editItemId, pizza, cart.items]);
 
     const extra = Number(selectedVariant?.extraPrice || 0);
     const base = Number(pizza?.basePrice || 0);
     const finalPrice = base + extra;
 
     const toggleBase = (ingId, isRemovable) => {
-        if (!isRemovable) return; // защитa в UI
+        if (!isRemovable) return;
         setRemoveIds(prev => {
             const next = new Set(prev);
             next.has(ingId) ? next.delete(ingId) : next.add(ingId);
@@ -94,29 +143,67 @@ export default function PizzaDetails() {
         });
     };
 
-    const onAddToCart = async () => {
+    async function refreshIngredientsOnly() {
+        try {
+            const [ingr, allow] = await Promise.all([
+                productApi.pizzaIngredients(id),
+                productApi.pizzaAllowedIngredients(id),
+            ]);
+            const normalizeIngredient = (x) => ({
+                id: x?.id ?? x?.ingredientId ?? x?.ingredientID ?? cryptoRandom(),
+                name: x?.name ?? "",
+                removable: x?.removable ?? x?.isRemovable ?? false,
+            });
+            setIngredients(Array.isArray(ingr) ? ingr.map(normalizeIngredient) : []);
+            setAllowed(Array.isArray(allow) ? allow.map((a) => ({
+                id: a?.id ?? a?.ingredientId ?? cryptoRandom(),
+                name: a?.name ?? "",
+            })) : []);
+        } catch {}
+    }
+
+    const onSubmit = async () => {
         try {
             setSubmitting(true);
             setError(null);
 
             const toAddArr = Array.from(addIds);
-            const toRemoveArr = Array
-                .from(removeIds)
-                .filter(x => !addIds.has(x));
+            const toRemoveArr = Array.from(removeIds).filter(x => !addIds.has(x));
 
-            const payload = {
-                productId: Number(id),
-                variantId: selectedVariant?.id ?? null,
-                quantity: Math.max(1, Number(qty) || 1),
-                note: (note ?? "").trim(),
-                removeIngredientIds: toRemoveArr,
-                addIngredientIds: toAddArr,
-            };
-
-            await cartApi.addPizza(payload);
-            navigate("/menu");
+            if (!isEdit) {
+                // --- ADD FLOW ---
+                await cartApi.addPizza({
+                    productId: Number(id),
+                    variantId: selectedVariant?.id ?? null,
+                    quantity: Math.max(1, Number(qty) || 1),
+                    note: (note ?? "").trim(),
+                    removeIngredientIds: toRemoveArr,
+                    addIngredientIds: toAddArr,
+                });
+                await cart.refresh().catch(() => {});
+                navigate("/menu");
+            } else {
+                // --- EDIT FLOW ---
+                await cartApi.updateItem(Number(editItemId), {
+                    quantity: Math.max(1, Number(qty) || 1),
+                    variantId: selectedVariant?.id ?? null,
+                    note: (note ?? "").trim(),
+                    removeIngredientIds: toRemoveArr,
+                    addIngredientIds: toAddArr,
+                });
+                await cart.refresh().catch(() => {});
+                navigate("/menu");
+            }
         } catch (e) {
-            setError(e?.data?.error || e?.message || "Failed to add to cart.");
+            const code = e?.data?.error || e?.message || "";
+            if (code === "remove_not_removable" || code === "remove_not_in_base" || code === "add_not_allowed" || code === "ingredient_in_both_add_and_remove") {
+                await refreshIngredientsOnly();
+                setError("Ingredients have changed. Please review your selections.");
+                if (code.startsWith("remove_")) setRemoveIds(new Set());
+                if (code === "add_not_allowed") setAddIds(new Set());
+            } else {
+                setError(code || "Operation failed.");
+            }
         } finally {
             setSubmitting(false);
         }
@@ -235,9 +322,9 @@ export default function PizzaDetails() {
                 <button
                     className="btn"
                     disabled={pizza.isAvailable === false || submitting}
-                    onClick={onAddToCart}
+                    onClick={onSubmit}
                 >
-                    {submitting ? "Adding..." : "Add to cart"}
+                    {submitting ? (isEdit ? "Saving..." : "Adding...") : (isEdit ? "Save changes" : "Add to cart")}
                 </button>
 
                 <div style={{ marginTop: 8 }}>

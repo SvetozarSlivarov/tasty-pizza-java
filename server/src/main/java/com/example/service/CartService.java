@@ -10,9 +10,7 @@ import com.example.model.enums.CustomizationAction;
 import com.example.model.enums.OrderStatus;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class CartService {
 
@@ -119,7 +117,6 @@ public class CartService {
                     else if (dough != null)                  variantLabel = dough;
                 }
             } else {
-                // Напитка
                 var drink = drinkDao.findById(it.getProductId());
                 name = (drink != null && drink.getName() != null) ? drink.getName() : "Drink";
                 imageUrl = (drink != null) ? drink.getImageUrl() : null;
@@ -182,8 +179,8 @@ public class CartService {
             unit = unit.add(v.getExtraPrice());
             toSet = v.getId();
         }
-        var toRemove = new java.util.LinkedHashSet<>(removeIds != null ? removeIds : java.util.List.<Integer>of());
-        var toAdd    = new java.util.LinkedHashSet<>(addIds    != null ? addIds    : java.util.List.<Integer>of());
+        var toRemove = new LinkedHashSet<>(removeIds != null ? removeIds : java.util.List.<Integer>of());
+        var toAdd    = new LinkedHashSet<>(addIds    != null ? addIds    : java.util.List.<Integer>of());
 
         for (Integer id : toRemove) {
             if (toAdd.contains(id)) {
@@ -192,7 +189,7 @@ public class CartService {
         }
         if (!toRemove.isEmpty()) {
             var base = pizzaIngredientDao.findByPizzaId(productId);
-            var removable = new java.util.HashMap<Integer, Boolean>();
+            var removable = new HashMap<Integer, Boolean>();
             for (var l : base) removable.put(l.getIngredientId(), l.isRemovable());
             for (Integer ing : toRemove) {
                 Boolean ok = removable.get(ing);
@@ -224,6 +221,43 @@ public class CartService {
 
         orderDao.touch(orderId);
         return oi;
+    }
+    public void replacePizzaCustomizations(int itemId, List<Integer> removeIds, List<Integer> addIds) {
+        var it = itemDao.findById(itemId);
+        if (it == null) throw new IllegalArgumentException("item_not_found");
+
+        var p = pizzaDao.findById(it.getProductId());
+        if (p == null) throw new IllegalArgumentException("not_pizza_item");
+
+        var toRemove = new LinkedHashSet<>(removeIds != null ? removeIds : java.util.List.<Integer>of());
+        var toAdd    = new java.util.LinkedHashSet<>(addIds    != null ? addIds    : java.util.List.<Integer>of());
+        for (Integer id : toRemove) if (toAdd.contains(id)) throw new IllegalArgumentException("ingredient_in_both_add_and_remove");
+
+        if (!toRemove.isEmpty()) {
+            var base = pizzaIngredientDao.findByPizzaId(p.getId());
+            var removable = new HashMap<Integer, Boolean>();
+            for (var l : base) removable.put(l.getIngredientId(), l.isRemovable());
+            for (Integer ing : toRemove) {
+                Boolean ok = removable.get(ing);
+                if (ok == null) throw new IllegalArgumentException("remove_not_in_base");
+                if (!ok) throw new IllegalArgumentException("remove_not_removable");
+            }
+        }
+
+        if (!toAdd.isEmpty()) {
+            var allowed = new java.util.HashSet<>(allowedDao.findIngredientIdsByPizzaId(p.getId()));
+            for (Integer ing : toAdd) {
+                if (!allowed.contains(ing)) throw new IllegalArgumentException("add_not_allowed");
+            }
+        }
+
+        var existing = custDao.findByOrderItemId(itemId);
+        for (var c : existing) custDao.remove(c.getId());
+
+        for (Integer ing : toRemove) custDao.add(new OrderCustomization(it, ingredient(ing), com.example.model.enums.CustomizationAction.REMOVE));
+        for (Integer ing : toAdd)    custDao.add(new OrderCustomization(it, ingredient(ing), CustomizationAction.ADD));
+
+        orderDao.touch(it.getOrder().getId());
     }
 
     public void setQuantity(int itemId, int qty) {

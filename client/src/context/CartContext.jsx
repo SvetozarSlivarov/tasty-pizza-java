@@ -19,8 +19,7 @@ function mapServerCart(data) {
         const id = it.id ?? it.itemId ?? it.cartItemId;
         const qty = it.quantity ?? it.qty ?? 1;
         const unitPrice = Number(it.unitPrice ?? it.price ?? 0);
-        const name =
-            it.name ?? it.productName ?? it.pizzaName ?? it.drinkName ?? "Item";
+        const name = it.name ?? it.productName ?? it.pizzaName ?? it.drinkName ?? "Item";
         const imageUrl = it.imageUrl ?? it.photo ?? it.thumbnailUrl ?? null;
 
         const size = it.size ?? it.variant?.size;
@@ -28,9 +27,32 @@ function mapServerCart(data) {
         const variantName = it.variantName ?? it.variant?.name;
         const variantLabel = variantName || [size, dough].filter(Boolean).join(" · ") || null;
 
-        const type = it.type ?? (it.variantId != null || it.variant ? "pizza" : "drink");
+        const type = it.type ?? ((it.pizzaVariantId != null || it.variantId != null || it.variant) ? "pizza" : "drink");
 
-        return { id, name, imageUrl, qty, unitPrice, type, variantLabel };
+        // нужни за Edit
+        const productId = it.productId ?? it.pizzaId ?? null;
+        const pizzaVariantId = it.pizzaVariantId ?? it.variantId ?? null;
+        const note = it.note ?? "";
+        const customizations = Array.isArray(it.customizations)
+            ? it.customizations.map(c => ({
+                ingredientId: c.ingredientId ?? c.id ?? c.ingredientID ?? null,
+                action: (c.action ?? "").toLowerCase(),
+            }))
+            : [];
+
+        return {
+            id,
+            name,
+            imageUrl,
+            qty,
+            unitPrice,
+            type,
+            variantLabel,
+            productId,
+            pizzaVariantId,
+            note,
+            customizations,
+        };
     });
 
     const subtotal =
