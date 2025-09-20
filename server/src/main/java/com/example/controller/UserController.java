@@ -76,7 +76,22 @@ public class UserController {
 
         User me = updated.get();
         me.setPassword(null);
-        HttpUtils.sendJson(ex, 200, me);
+
+        String newToken = null;
+        if (!uname.equals(me.getUsername())) {
+            newToken = jwt.issue(me.getId(), me.getUsername(), me.getRole().name());
+        }
+
+        if (newToken != null) {
+            HttpUtils.sendJson(ex, 200, Map.of(
+                    "user", me,
+                    "token", newToken
+            ));
+        } else {
+            HttpUtils.sendJson(ex, 200, Map.of(
+                    "user", me
+            ));
+        }
     }
 
     /** DELETE /users/me — account owner delete profile */

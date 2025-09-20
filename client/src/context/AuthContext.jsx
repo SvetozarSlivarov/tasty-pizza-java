@@ -10,8 +10,13 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         (async () => {
-            try { setUser(await authApi.me()); } catch {}
-            finally { setBooted(true); }
+            try {
+                setUser(await authApi.me());
+            } catch {
+                setUser(null);
+            } finally {
+                setBooted(true);
+            }
         })();
     }, []);
 
@@ -22,11 +27,14 @@ export function AuthProvider({ children }) {
             setUser(await authApi.me());
             return { ok: true };
         } catch (e) {
-            const msg = e.data?.error === "invalid_credentials"
-                ? "Invalid username or password"
-                : e.message || "Login failed";
+            const msg =
+                e.data?.error === "invalid_credentials"
+                    ? "Invalid username or password"
+                    : e.message || "Login failed";
             return { ok: false, message: msg };
-        } finally { setLoading(false); }
+        } finally {
+            setLoading(false);
+        }
     }
 
     async function register(values) {
@@ -36,16 +44,30 @@ export function AuthProvider({ children }) {
             setUser(await authApi.me());
             return { ok: true };
         } catch (e) {
-            const msg = e.data?.error === "username_exists"
-                ? "Username already taken"
-                : e.message || "Registration failed";
+            const msg =
+                e.data?.error === "username_exists"
+                    ? "Username already taken"
+                    : e.message || "Registration failed";
             return { ok: false, message: msg };
-        } finally { setLoading(false); }
+        } finally {
+            setLoading(false);
+        }
     }
 
-    async function logout() { await authApi.logout(); setUser(null); }
+    async function logout() {
+        await authApi.logout();
+        setUser(null);
+    }
 
-    const value = useMemo(() => ({ user, loading, login, register, logout, booted }), [user, loading, booted]);
+    function updateAuth({ user }) {
+        if (user) setUser(user);
+    }
+
+    const value = useMemo(
+        () => ({ user, loading, login, register, logout, booted, setUser, updateAuth }),
+        [user, loading, booted]
+    );
+
     return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 }
 
