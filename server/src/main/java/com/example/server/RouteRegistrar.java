@@ -77,6 +77,7 @@ public class RouteRegistrar {
                 (ex, m) -> beans.orderCtl.handleGetOne(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST", "^/orders/(\\d+)/start-preparing$",
                 (ex, m) -> beans.orderCtl.handleStartPreparing(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST", "^/orders/(\\d+)/reorder$", (ex,m) -> beans.orderCtl.handleReorder(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST", "^/orders/(\\d+)/out-for-delivery$",
                 (ex, m) -> beans.orderCtl.handleOutForDelivery(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST", "^/orders/(\\d+)/deliver$",
@@ -88,6 +89,7 @@ public class RouteRegistrar {
 
         // USERS
         var usersR = new ContextRouter();
+        usersR.register("GET", "^/me/orders$", (ex,m) -> beans.userCtl.listMyOrders(ex));
         usersR.register("GET",    "^/me$",                   (ex,m) -> beans.userCtl.getMe(ex));
         usersR.register("PUT",    "^/me$",                   (ex,m) -> beans.userCtl.updateMe(ex));
         usersR.register("DELETE", "^/me$",                   (ex,m) -> beans.userCtl.deleteMe(ex));

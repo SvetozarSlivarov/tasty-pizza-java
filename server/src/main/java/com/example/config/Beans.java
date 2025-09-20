@@ -1,5 +1,7 @@
 package com.example.config;
 
+import com.example.dao.OrderDao;
+import com.example.dao.impl.OrderDaoImpl;
 import io.github.cdimascio.dotenv.Dotenv;
 import com.example.controller.*;
 import com.example.security.JwtService;
@@ -8,6 +10,8 @@ import com.example.storage.CloudinaryStorageService;
 import com.example.storage.StorageService;
 
 public class Beans {
+    public final OrderDao orderDao;
+
     public final JwtService jwt;
     public final UserService users;
     public final PizzaService pizzas;
@@ -58,6 +62,8 @@ public class Beans {
         // 3) Storage
         this.storageService = new CloudinaryStorageService(cloud, key, sec);
 
+        this.orderDao = new OrderDaoImpl();
+
         // 4) Services
         this.users           = new UserService();
         this.ingredients     = new IngredientService();
@@ -69,13 +75,13 @@ public class Beans {
 
         // 5) Controllers
         this.authCtl           = new AuthController(users, jwt);
-        this.userCtl           = new UserController(users);
+        this.userCtl           = new UserController(users, orderDao,jwt, cartService);
         this.pizzaCtl          = new PizzaController(pizzas, pizzaIngredient, jwt);
         this.ingredientCtl     = new IngredientController(ingredients, jwt);
         this.ingredientTypeCtl = new IngredientTypeController(ingredients, jwt);
         this.drinkCtl          = new DrinkController(drinks, jwt);
         this.cartCtl           = new CartController(cartService, jwt);
-        this.orderCtl          = new OrderController(cartService, jwt);
+        this.orderCtl          = new OrderController(cartService, jwt, orderDao);
         this.maintenanceController = new MaintenanceController(jwt);
     }
 

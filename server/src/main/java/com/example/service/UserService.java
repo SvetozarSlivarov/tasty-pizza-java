@@ -40,7 +40,7 @@ public class UserService {
 
         if (newUsername != null && !newUsername.isBlank()) {
             if (!username.equals(newUsername) && existsByUsername(newUsername)) {
-                return Optional.empty(); // username вече съществува
+                return Optional.empty();
             }
             user.setUsername(newUsername);
         }

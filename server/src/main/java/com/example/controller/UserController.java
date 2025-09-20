@@ -1,10 +1,14 @@
 package com.example.controller;
 
+import com.example.dao.OrderDao;
+import com.example.model.enums.OrderStatus;
 import com.example.dto.RoleUpdateRequest;
 import com.example.dto.UserUpdateRequest;
 import com.example.http.HttpUtils;
 import com.example.model.User;
 import com.example.model.enums.UserRole;
+import com.example.security.JwtService;
+import com.example.service.CartService;
 import com.example.service.UserService;
 import com.example.utils.JsonUtil;
 import com.sun.net.httpserver.HttpExchange;
@@ -16,9 +20,15 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService users;
+    private final OrderDao orderDao;
+    private final JwtService jwt;
+    private final CartService cartService;
 
-    public UserController(UserService users) {
+    public UserController(UserService users, OrderDao orderDao, JwtService jwt, CartService cartService) {
         this.users = users;
+        this.orderDao = orderDao;
+        this.jwt = jwt;
+        this.cartService = cartService;
     }
 
     // ===== helpers =====
@@ -107,6 +117,56 @@ public class UserController {
 
         User u = res.get(); u.setPassword(null);
         HttpUtils.sendJson(ex, 200, u);
+    }
+    public void listMyOrders(HttpExchange ex) throws IOException {
+        HttpUtils.requireMethod(ex, "GET");
+        Integer userId = HttpUtils.tryGetUserId(ex, jwt);
+        if (userId == null || userId <= 0) { HttpUtils.sendJson(ex, 401, Map.of("error","unauthorized")); return; }
+
+        var q = HttpUtils.parseQuery(ex);
+        String statusFilter = q.getOrDefault("status", "all");
+        String sort = q.getOrDefault("sort", "ordered_desc");
+
+        var all = orderDao.findByUserId(userId);
+        var filtered = new java.util.ArrayList<com.example.model.Order>();
+        for (var o : all) {
+            if (o.getStatus() == OrderStatus.CART) continue;
+            boolean keep = switch (statusFilter.toLowerCase()) {
+                case "active"    -> o.getStatus() == OrderStatus.ORDERED
+                        || o.getStatus() == OrderStatus.PREPARING
+                        || o.getStatus() == OrderStatus.OUT_FOR_DELIVERY;
+                case "delivered" -> o.getStatus() == OrderStatus.DELIVERED;
+                case "cancelled" -> o.getStatus() == OrderStatus.CANCELLED;
+                default          -> true;
+            };
+            if (keep) filtered.add(o);
+        }
+
+        filtered.sort((a,b) -> {
+            var at = a.getOrderedAt(); var bt = b.getOrderedAt();
+            int cmp = java.util.Objects.compare(at, bt, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+            return "ordered_asc".equalsIgnoreCase(sort) ? cmp : -cmp;
+        });
+
+        var views = new java.util.ArrayList<com.example.dto.OrderHistoryView>();
+        for (var o : filtered) {
+            var cv = cartService.getCart(o.getId());
+            views.add(new com.example.dto.OrderHistoryView(
+                    cv.orderId(),
+                    cv.status(),
+                    cv.items(),
+                    cv.total(),
+                    o.getOrderedAt(),
+                    o.getPreparingAt(),
+                    o.getOutForDeliveryAt(),
+                    o.getDeliveredAt(),
+                    o.getCancelledAt(),
+                    o.getDeliveryPhone(),
+                    o.getDeliveryAddress()
+            ));
+        }
+
+        HttpUtils.sendJson(ex, 200, views);
     }
 
     /** PUT /users/by-username/{username}/role — only ADMIN */

@@ -17,7 +17,6 @@ public class CartService {
     private final OrderDao orderDao = new OrderDaoImpl();
     private final OrderItemDao itemDao = new OrderItemDaoImpl();
     private final OrderItemCustomizationDao custDao = new OrderItemCustomizationDaoImpl();
-
     private final PizzaDao pizzaDao = new PizzaDaoImpl();
     private final DrinkDao drinkDao = new DrinkDaoImpl();
     private final PizzaVariantDao variantDao = new PizzaVariantDaoImpl();
@@ -30,7 +29,6 @@ public class CartService {
             if (cookieCart != null && cookieCart.getStatus() == OrderStatus.CART) {
 
                 if (userId != null && userId > 0) {
-                    // намери налична CART кошница за user-а (вземи най-новата)
                     Order userCart = null;
                     for (var o : orderDao.findByUserId(userId)) {
                         if (o.getStatus() == OrderStatus.CART) {
@@ -39,14 +37,12 @@ public class CartService {
                     }
 
                     if (userCart != null) {
-                        // ако cookieCart не е същата като userCart -> MERGE + CLEANUP
                         if (cookieCart.getId() != userCart.getId()) {
                             mergeCartItems(cookieCart.getId(), userCart.getId());
-                            deleteOrderCompletely(cookieCart.getId()); // ⬅️ почистване на излишната поръчка
+                            deleteOrderCompletely(cookieCart.getId());
                         }
                         return userCart.getId();
                     } else {
-                        // user още няма кошница -> закачаме cookieCart към него
                         if (cookieCart.getUserId() == null) {
                             cookieCart.setUserId(userId);
                             orderDao.update(cookieCart);
@@ -60,7 +56,6 @@ public class CartService {
             }
         }
 
-        // без валидно cookie
         if (userId != null && userId > 0) {
             for (var o : orderDao.findByUserId(userId)) {
                 if (o.getStatus() == OrderStatus.CART) return o.getId();
@@ -323,6 +318,34 @@ public class CartService {
         if (!orderDao.setOrderedNow(orderId))
             throw new IllegalStateException("cannot_set_ordered_at");
         orderDao.touch(orderId);
+    }
+    public void importFromOrder(int fromOrderId, int toCartOrderId) {
+        var fromItems = itemDao.findByOrderId(fromOrderId);
+        for (var it : fromItems) {
+            if (it.getPizzaVariantId() != null) {
+                var custs = custDao.findByOrderItemId(it.getId());
+                var removeIds = new java.util.ArrayList<Integer>();
+                var addIds    = new java.util.ArrayList<Integer>();
+                for (var c : custs) {
+                    switch (c.getAction()) {
+                        case REMOVE -> removeIds.add(c.getIngredient().getId());
+                        case ADD    -> addIds.add(c.getIngredient().getId());
+                    }
+                }
+                addPizza(
+                        toCartOrderId,
+                        it.getProductId(),
+                        it.getPizzaVariantId(),
+                        it.getQuantity(),
+                        it.getNote(),
+                        removeIds,
+                        addIds
+                );
+            } else {
+                addDrink(toCartOrderId, it.getProductId(), it.getQuantity(), it.getNote());
+            }
+        }
+        orderDao.touch(toCartOrderId);
     }
 
 

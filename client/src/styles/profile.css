@@ -1,0 +1,21 @@
+.profile .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+.profile .muted { color:#666; }
+.profile .orders__toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.profile .seg { background:#f3f3f3; border-radius:999px; padding:4px; display:inline-flex; }
+.profile .seg button { border:0; background:transparent; padding:6px 12px; border-radius:999px; cursor:pointer; }
+.profile .seg .active { background:#fff; box-shadow:0 0 0 1px #ddd; }
+.order { border:1px solid #eee; border-radius:12px; padding:12px; margin:12px 0; }
+.order__head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.order .code { font-weight:600; margin-right:8px; }
+.chip { padding:2px 8px; border-radius:999px; font-size:12px; background:#eef; }
+.order__timeline { display:flex; gap:16px; padding:8px 0; }
+.stage { display:flex; align-items:center; gap:8px; opacity:.6; }
+.stage.done { opacity:1; }
+.stage .dot { width:8px; height:8px; border-radius:50%; background:#999; }
+.stage.done .dot { background:#0a0; }
+.order__items { list-style:none; padding:0; margin:0; }
+.order__items .item { display:grid; grid-template-columns:56px 1fr auto auto; gap:12px; align-items:center; padding:8px 0; border-top:1px dashed #eee; }
+.order__items .item:first-child { border-top:0; }
+.order__items .thumb { width:56px; height:56px; border-radius:8px; background:#f5f5f5 center/cover; }
+.order__delivery { font-size:12px; border-top:1px dashed #eee; padding-top:8px; display:flex; gap:16px; }
+.btn { border:0; padding:8px 12px; border-radius:8px; background:#111; color:#fff; cursor:pointer; }
