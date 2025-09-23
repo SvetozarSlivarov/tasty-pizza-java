@@ -89,10 +89,10 @@ public class SchemaBuilder {
         String sql = """
             CREATE TABLE IF NOT EXISTS pizza_variants (
                 id INT PRIMARY KEY AUTO_INCREMENT,
-                pizza_id INT NOT NULL,                                -- FK към pizzas(product_id)
+                pizza_id INT NOT NULL,
                 size ENUM('small','medium','large') NOT NULL,
                 dough ENUM('thin','classic','wholegrain') NOT NULL,
-                extra_price DECIMAL(8,2) NOT NULL DEFAULT 0.00,       -- добавка към base_price
+                extra_price DECIMAL(8,2) NOT NULL DEFAULT 0.00,
                 UNIQUE (pizza_id, size, dough),
                 FOREIGN KEY (pizza_id) REFERENCES pizzas(product_id) ON DELETE CASCADE
             )

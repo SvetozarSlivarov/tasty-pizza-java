@@ -12,8 +12,6 @@ export default function CartDrawer() {
     const [openCheckout, setOpenCheckout] = useState(false);
     const [showCelebrate, setShowCelebrate] = useState(false);
 
-    // --- FIX: безкраен цикъл при refresh() ---
-    // Пазим стабилна референция към refresh и тригърваме само на "rising edge" на isOpen
     const isOpen = cart.isOpen;
 
     const refreshRef = useRef(cart.refresh);
@@ -29,7 +27,6 @@ export default function CartDrawer() {
         prevIsOpenRef.current = isOpen;
     }, [isOpen]);
 
-    // Зареждане на имената на съставките за пици в количката
     useEffect(() => {
         if (!cart.isOpen) return;
         const pizzaItems = (cart.items || []).filter(
@@ -96,7 +93,7 @@ export default function CartDrawer() {
         return { display: `${head}, … +${more} more`, title: full };
     };
 
-    // Извиква се от CheckoutModal при валиден submit
+
     const handleCheckout = async ({ phone, address }) => {
         await cart.checkout({ phone, address });
         setOpenCheckout(false);

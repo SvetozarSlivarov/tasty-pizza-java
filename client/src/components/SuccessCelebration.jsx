@@ -61,7 +61,6 @@ export default function SuccessCelebration({ onDone }) {
                 ctx.rotate(p.rot);
                 ctx.fillStyle = p.color;
 
-                // small rectangle "confetti"
                 const s = p.size;
                 ctx.fillRect(-s, -s * 0.6, s * 2, s * 1.2);
                 ctx.restore();

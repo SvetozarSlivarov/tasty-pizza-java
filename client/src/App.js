@@ -12,6 +12,8 @@ import CartDrawer from "./components/CartDrawer";
 import CartFab from "./components/CartFab";
 import {CartProvider} from "./context/CartContext";
 import Profile from "./pages/Profile";
+import AdminHome from "./pages/admin/Home";
+import PizzasAdmin from "./pages/admin/Pizzas";
 
 function App() {
     return (
@@ -27,6 +29,8 @@ function App() {
                         <Route path="/menu" element={<Menu />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/login" element={<Login />} />
+                        <Route path="/admin" element={<AdminHome />} />
+                        <Route path="/admin/pizzas" element={<PizzasAdmin />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/pizza/:id" element={<PizzaDetails />} />
                         <Route path="/drink/:id" element={<DrinkDetails />} />

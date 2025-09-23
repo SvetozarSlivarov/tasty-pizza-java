@@ -96,7 +96,7 @@ public class PizzaService {
             throw new IllegalArgumentException("invalid_type");
 
         byte[] bytes = Base64.getDecoder().decode(req.dataBase64);
-        if (bytes.length > 5 * 1024 * 1024) // 5MB
+        if (bytes.length > 5 * 1024 * 1024)
             throw new IllegalArgumentException("too_large");
 
         Pizza pizza = pizzaDao.findById(pizzaId);
@@ -110,7 +110,7 @@ public class PizzaService {
             updated.setVariants(variantDao.findByPizzaId(pizzaId));
             return PizzaMapper.toDto(updated);
         } catch (Exception e) {
-            e.printStackTrace(); // временно, за да видим Cloudinary/DI грешката в конзолата
+            e.printStackTrace();
             throw new RuntimeException("upload_failed", e);
         }
     }

@@ -1,10 +1,8 @@
-// src/components/EditProfileModal.jsx
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { authApi } from "../api/auth";
 import "../styles/edit-profile-modal.css";
 
-/** Generic modal wrapper */
 function EpmModal({ open, title, children, onClose }) {
     if (!open) return null;
 

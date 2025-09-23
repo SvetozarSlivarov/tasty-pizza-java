@@ -1,4 +1,3 @@
-// src/components/QuickModal.jsx
 import { useEffect, useMemo } from "react";
 
 const DEFAULT_FALLBACK = "images/fallBackImg.png";
@@ -38,7 +37,6 @@ export default function QuickModal({
     const variantLabel = (v) =>
         v?.name || [v?.size, v?.dough].filter(Boolean).join(" · ");
 
-    // Escape за затваряне
     useEffect(() => {
         const onKey = (e) => {
             if (e.key === "Escape") onClose?.();

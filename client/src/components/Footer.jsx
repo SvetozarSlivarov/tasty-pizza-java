@@ -28,7 +28,6 @@ export default function Footer() {
                     </ul>
                 </nav>
 
-                {/* Contact */}
                 <div className="footer-col">
                     <h4>Contact</h4>
                     <ul className="contact">

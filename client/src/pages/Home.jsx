@@ -1,4 +1,3 @@
-// src/pages/Home.jsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "../styles/modal.css";
@@ -209,7 +208,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* NEWEST DRINKS */}
             <section className="section">
                 <div className="container">
                     <h2 className="section-title">NEWEST DRINKS</h2>
