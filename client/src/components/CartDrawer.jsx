@@ -1,22 +1,42 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { productApi } from "../api/catalog";
 import "../styles/cart.css";
+import CheckoutModal from "../components/CheckoutModal";
+import SuccessCelebration from "../components/SuccessCelebration";
 
 export default function CartDrawer() {
     const cart = useCart();
     const [ingNameCache, setIngNameCache] = useState({});
+    const [openCheckout, setOpenCheckout] = useState(false);
+    const [showCelebrate, setShowCelebrate] = useState(false);
 
+    // --- FIX: безкраен цикъл при refresh() ---
+    // Пазим стабилна референция към refresh и тригърваме само на "rising edge" на isOpen
+    const isOpen = cart.isOpen;
+
+    const refreshRef = useRef(cart.refresh);
     useEffect(() => {
-        if (cart.isOpen) cart.refresh().catch(() => {});
-    }, [cart.isOpen]);
+        refreshRef.current = cart.refresh;
+    }, [cart.refresh]);
 
+    const prevIsOpenRef = useRef(false);
+    useEffect(() => {
+        if (isOpen && !prevIsOpenRef.current) {
+            Promise.resolve(refreshRef.current?.()).catch(() => {});
+        }
+        prevIsOpenRef.current = isOpen;
+    }, [isOpen]);
+
+    // Зареждане на имената на съставките за пици в количката
     useEffect(() => {
         if (!cart.isOpen) return;
-        const pizzaItems = (cart.items || []).filter(i => i.type === "pizza" && i.productId != null);
-        const productIds = Array.from(new Set(pizzaItems.map(i => i.productId)));
-        const missing = productIds.filter(pid => !ingNameCache[pid]);
+        const pizzaItems = (cart.items || []).filter(
+            (i) => i.type === "pizza" && i.productId != null
+        );
+        const productIds = Array.from(new Set(pizzaItems.map((i) => i.productId)));
+        const missing = productIds.filter((pid) => !ingNameCache[pid]);
         if (missing.length === 0) return;
 
         (async () => {
@@ -28,31 +48,40 @@ export default function CartDrawer() {
                             productApi.pizzaAllowedIngredients(pid),
                         ]);
                         const map = {};
-                        (Array.isArray(base) ? base : []).forEach(x => {
+                        (Array.isArray(base) ? base : []).forEach((x) => {
                             const id = x?.id ?? x?.ingredientId;
                             if (id != null) map[id] = x?.name ?? "";
                         });
-                        (Array.isArray(allow) ? allow : []).forEach(x => {
+                        (Array.isArray(allow) ? allow : []).forEach((x) => {
                             const id = x?.id ?? x?.ingredientId;
                             if (id != null) map[id] = x?.name ?? "";
                         });
                         return [pid, map];
                     })
                 );
-                setIngNameCache(prev => {
+                setIngNameCache((prev) => {
                     const next = { ...prev };
                     for (const [pid, map] of entries) next[pid] = map;
                     return next;
                 });
             } catch {
+                // ignore
             }
         })();
     }, [cart.isOpen, cart.items, ingNameCache]);
 
-    const formatCustomizations = (it) => {
-        if (it.type !== "pizza" || !Array.isArray(it.customizations) || it.customizations.length === 0) return null;
+    const ingredientName = (productId, ingredientId) =>
+        ingNameCache?.[productId]?.[ingredientId] || `#${ingredientId}`;
 
-        const formatted = it.customizations.map(c => {
+    const formatCustomizations = (it) => {
+        if (
+            it.type !== "pizza" ||
+            !Array.isArray(it.customizations) ||
+            it.customizations.length === 0
+        )
+            return null;
+
+        const formatted = it.customizations.map((c) => {
             const action = (c.action || "").toLowerCase();
             const sign = action === "add" ? "+" : action === "remove" ? "–" : "";
             return `${sign} ${ingredientName(it.productId, c.ingredientId)}`;
@@ -67,8 +96,12 @@ export default function CartDrawer() {
         return { display: `${head}, … +${more} more`, title: full };
     };
 
-    const ingredientName = (productId, ingredientId) =>
-        ingNameCache?.[productId]?.[ingredientId] || `#${ingredientId}`;
+    // Извиква се от CheckoutModal при валиден submit
+    const handleCheckout = async ({ phone, address }) => {
+        await cart.checkout({ phone, address });
+        setOpenCheckout(false);
+        setShowCelebrate(true);
+    };
 
     return (
         <>
@@ -123,12 +156,14 @@ export default function CartDrawer() {
                                             (() => {
                                                 const summary = formatCustomizations(it);
                                                 return summary ? (
-                                                    <div className="ci-customizations-inline" title={summary.title}>
+                                                    <div
+                                                        className="ci-customizations-inline"
+                                                        title={summary.title}
+                                                    >
                                                         {summary.display}
                                                     </div>
                                                 ) : null;
-                                            })()
-                                        }
+                                            })()}
 
                                         <div className="ci-meta">
                                             <div className="qty">
@@ -143,7 +178,9 @@ export default function CartDrawer() {
                                                     type="number"
                                                     min={1}
                                                     value={it.qty}
-                                                    onChange={(e) => cart.updateQty(it.id, e.target.value)}
+                                                    onChange={(e) =>
+                                                        cart.updateQty(it.id, Number(e.target.value) || 1)
+                                                    }
                                                     aria-label="Quantity"
                                                 />
                                                 <button
@@ -157,8 +194,8 @@ export default function CartDrawer() {
                                             <div className="price">
                                                 {(it.unitPrice * it.qty).toFixed(2)} BGN
                                                 <span className="muted per">
-                                                    ({it.unitPrice.toFixed(2)} ea)
-                                                </span>
+                          ({it.unitPrice.toFixed(2)} ea)
+                        </span>
                                             </div>
                                         </div>
                                     </div>
@@ -204,18 +241,7 @@ export default function CartDrawer() {
                         </button>
                         <button
                             className="btn"
-                            onClick={async () => {
-                                try {
-                                    const phone = prompt("Phone number:");
-                                    const address = prompt("Delivery address:");
-                                    if (!phone || !address) return;
-                                    await cart.checkout({ phone, address });
-                                    alert("Order placed!");
-                                    cart.close();
-                                } catch (e) {
-                                    alert(e?.data?.error || e?.message || "Checkout failed");
-                                }
-                            }}
+                            onClick={() => setOpenCheckout(true)}
                             disabled={cart.items.length === 0}
                         >
                             Checkout
@@ -223,6 +249,21 @@ export default function CartDrawer() {
                     </div>
                 </footer>
             </aside>
+
+            <CheckoutModal
+                open={openCheckout}
+                onClose={() => setOpenCheckout(false)}
+                onCheckout={handleCheckout}
+            />
+
+            {showCelebrate && (
+                <SuccessCelebration
+                    onDone={() => {
+                        setShowCelebrate(false);
+                        cart.close();
+                    }}
+                />
+            )}
         </>
     );
 }
