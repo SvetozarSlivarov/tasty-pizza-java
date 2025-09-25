@@ -10,14 +10,9 @@ public interface UserDao {
     User findById(int id);
 
     User findByUsername(String username);
-
-    User findByUsernameAndPassword(String username, String password);
-
     List<User> findAll();
     boolean deleteById(int id);
     boolean save(User user);
-
     boolean update(User user);
-
     boolean delete(int id);
 }

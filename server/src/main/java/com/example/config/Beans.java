@@ -59,12 +59,10 @@ public class Beans {
             """);
         }
 
-        // 3) Storage
         this.storageService = new CloudinaryStorageService(cloud, key, sec);
 
         this.orderDao = new OrderDaoImpl();
 
-        // 4) Services
         this.users           = new UserService();
         this.ingredients     = new IngredientService();
         this.pizzaIngredient = new PizzaIngredientService();
@@ -73,7 +71,6 @@ public class Beans {
         this.pizzas = new PizzaService(storageService);
         this.drinks = new DrinkService(storageService);
 
-        // 5) Controllers
         this.authCtl           = new AuthController(users, jwt);
         this.userCtl           = new UserController(users, orderDao,jwt, cartService);
         this.pizzaCtl          = new PizzaController(pizzas, pizzaIngredient, jwt);

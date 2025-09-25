@@ -75,7 +75,6 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
             });
             if (newId <= 0) return null;
 
-            // 2) pizzas (spicy_level)
             String insPizza =
                     "INSERT INTO pizzas(product_id, spicy_level) VALUES (?, ?)";
             update(insPizza, ps -> {
@@ -95,7 +94,6 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
     @Override
     public Pizza update(Pizza pizza) {
         try {
-            // products
             String sql =
                     "UPDATE products SET name = ?, description = ?, base_price = ?, is_available = ? , image_url = ? " +
                             "WHERE id = ? AND type = 'pizza'";
@@ -135,19 +133,6 @@ public class PizzaDaoImpl extends AbstractDao implements PizzaDao {
         }
     }
 
-    @Override
-    public List<PizzaVariant> findVariants(int pizzaId) {
-        String sql = "SELECT id, pizza_id, size, dough, extra_price " +
-                "FROM pizza_variants WHERE pizza_id = ? ORDER BY id";
-        try {
-            return queryList(sql, ps -> ps.setInt(1, pizzaId), this::mapVariant);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
-    }
-
-    // === mappers ===
 
     private Pizza mapPizza(ResultSet rs) throws SQLException {
         Pizza p = new Pizza();

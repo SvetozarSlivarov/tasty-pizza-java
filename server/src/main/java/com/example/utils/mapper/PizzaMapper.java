@@ -1,7 +1,7 @@
 package com.example.utils.mapper;
 
-import com.example.dto.PizzaDto;
-import com.example.dto.PizzaVariantDto;
+import com.example.dto.pizza.PizzaDto;
+import com.example.dto.pizza.PizzaVariantDto;
 import com.example.model.Pizza;
 import com.example.model.PizzaVariant;
 import com.example.model.enums.*;

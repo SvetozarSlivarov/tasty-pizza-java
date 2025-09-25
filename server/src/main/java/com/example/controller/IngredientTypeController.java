@@ -1,6 +1,6 @@
 package com.example.controller;
 
-import com.example.dto.IngredientTypeCreateDto;
+import com.example.dto.ingredient.IngredientTypeCreateDto;
 import com.example.http.HttpUtils;
 import com.example.model.IngredientType;
 import com.example.model.enums.UserRole;

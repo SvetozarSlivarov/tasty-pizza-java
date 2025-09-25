@@ -6,9 +6,6 @@ public class IngredientType {
 
     public IngredientType() {}
 
-    public IngredientType(String name, String displayName) {
-        this.name = name;
-    }
 
     public IngredientType(int id, String name) {
         this.id = id;

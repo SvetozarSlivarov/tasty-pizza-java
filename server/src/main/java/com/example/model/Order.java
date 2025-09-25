@@ -6,7 +6,7 @@ import java.sql.Timestamp;
 
 public class Order {
     private int id;
-    private Integer userId; // nullable
+    private Integer userId;
     private OrderStatus status = OrderStatus.CART;
 
     private Timestamp orderedAt;
@@ -15,8 +15,8 @@ public class Order {
     private Timestamp deliveredAt;
     private Timestamp cancelledAt;
 
-    private String deliveryPhone;    // VARCHAR(32)
-    private String deliveryAddress;  // TEXT
+    private String deliveryPhone;
+    private String deliveryAddress;
 
     private Timestamp createdAt;
     private Timestamp updatedAt;

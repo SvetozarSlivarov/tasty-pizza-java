@@ -1,7 +1,6 @@
 package com.example.security;
 
 import com.example.model.enums.UserRole;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.io.Decoders;

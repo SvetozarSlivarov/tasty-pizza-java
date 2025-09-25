@@ -1,4 +1,3 @@
-
 INSERT INTO products (type, name, description, base_price, is_available, image_url)
 VALUES
     ('pizza', 'Margherita', 'Classic pizza with tomato and mozzarella', 8.50, TRUE, 'https://res.cloudinary.com/dea47xrrc/image/upload/products/file_wwwuxv.jpg'),

@@ -2,9 +2,9 @@ package com.example.service;
 
 import com.example.dao.DrinkDao;
 import com.example.dao.impl.DrinkDaoImpl;
-import com.example.dto.DrinkCreateRequest;
-import com.example.dto.DrinkUpdateRequest;
-import com.example.dto.ImageUploadRequest;
+import com.example.dto.drink.DrinkCreateRequest;
+import com.example.dto.drink.DrinkUpdateRequest;
+import com.example.dto.image.ImageUploadRequest;
 import com.example.exception.BadRequestException;
 import com.example.exception.NotFoundException;
 import com.example.model.Drink;

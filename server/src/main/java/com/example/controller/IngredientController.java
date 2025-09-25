@@ -1,8 +1,8 @@
 package com.example.controller;
 
+import com.example.dto.ingredient.IngredientCreateDto;
 import com.example.http.HttpUtils;
 import com.example.model.Ingredient;
-import com.example.model.IngredientType;
 import com.example.model.enums.UserRole;
 import com.example.security.JwtService;
 import com.example.service.IngredientService;
@@ -11,7 +11,6 @@ import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 public class IngredientController {
     private final IngredientService service;
@@ -34,7 +33,7 @@ public class IngredientController {
         HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
 
         var body = HttpUtils.readBody(ex);
-        var dto = JsonUtil.fromJson(body, com.example.dto.IngredientCreateDto.class);
+        var dto = JsonUtil.fromJson(body, IngredientCreateDto.class);
 
         if (dto == null || dto.name == null || dto.name.isBlank() || dto.typeId == null || dto.typeId <= 0) {
             HttpUtils.sendJson(ex, 400, java.util.Map.of("error", "bad_request"));

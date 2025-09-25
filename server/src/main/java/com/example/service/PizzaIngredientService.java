@@ -2,12 +2,14 @@ package com.example.service;
 
 import com.example.dao.*;
 import com.example.dao.impl.*;
-import com.example.dto.IngredientTypeView;
-import com.example.dto.PizzaIngredientView;
+import com.example.dto.ingredient.IngredientTypeView;
+import com.example.dto.pizza.PizzaIngredientView;
 import com.example.exception.NotFoundException;
 import com.example.model.Ingredient;
 import com.example.model.PizzaIngredient;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class PizzaIngredientService {
@@ -82,10 +84,10 @@ public class PizzaIngredientService {
         var ids = links.stream().map(pi -> pi.getIngredientId()).toList();
         var ingredients = ingredientDao.findByIds(ids);
 
-        var byId = new java.util.HashMap<Integer, Ingredient>();
+        var byId = new HashMap<Integer, Ingredient>();
         for (var ing : ingredients) byId.put(ing.getId(), ing);
 
-        var out = new java.util.ArrayList<PizzaIngredientView>();
+        var out = new ArrayList<PizzaIngredientView>();
         for (var link : links) {
             var ing = byId.get(link.getIngredientId());
             String name = ing != null ? ing.getName() : null;

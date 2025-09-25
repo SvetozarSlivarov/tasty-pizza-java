@@ -55,7 +55,6 @@ public class DrinkDaoImpl extends AbstractDao implements DrinkDao {
     @Override
     public Drink save(Drink drink) {
         try {
-            // 1) insert into products
             String insProduct = "INSERT INTO products(type, name, description, base_price, is_available, image_url) " +
                     "VALUES ('drink', ?, ?, ?, ?, ?)";
             int id = updateReturningId(insProduct, ps -> {

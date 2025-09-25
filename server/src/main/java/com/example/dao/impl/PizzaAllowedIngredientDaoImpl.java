@@ -22,14 +22,6 @@ public class PizzaAllowedIngredientDaoImpl extends AbstractDao implements PizzaA
     }
 
     @Override
-    public List<Integer> findPizzaIdsByIngredientId(int ingredientId) {
-        String sql = "SELECT pizza_id FROM pizza_allowed_ingredients WHERE ingredient_id = ?";
-        try {
-            return queryList(sql, ps -> ps.setInt(1, ingredientId), rs -> rs.getInt("pizza_id"));
-        } catch (SQLException e) { e.printStackTrace(); return new ArrayList<>(); }
-    }
-
-    @Override
     public boolean allow(int pizzaId, int ingredientId) {
         if (pizzaDao.findById(pizzaId) == null) return false;
         if (ingredientDao.findById(ingredientId) == null) return false;

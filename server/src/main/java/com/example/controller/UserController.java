@@ -1,9 +1,11 @@
 package com.example.controller;
 
 import com.example.dao.OrderDao;
+import com.example.dto.order.OrderHistoryView;
+import com.example.model.Order;
 import com.example.model.enums.OrderStatus;
-import com.example.dto.RoleUpdateRequest;
-import com.example.dto.UserUpdateRequest;
+import com.example.dto.auth.RoleUpdateRequest;
+import com.example.dto.auth.UserUpdateRequest;
 import com.example.http.HttpUtils;
 import com.example.model.User;
 import com.example.model.enums.UserRole;
@@ -14,7 +16,9 @@ import com.example.utils.JsonUtil;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public class UserController {
@@ -31,7 +35,6 @@ public class UserController {
         this.cartService = cartService;
     }
 
-    // ===== helpers =====
     private UserRole role(HttpExchange ex) {
         Object r = ex.getAttribute("role");
         if (r instanceof String s) {
@@ -46,9 +49,8 @@ public class UserController {
         return (u instanceof String s) ? s : null;
     }
 
-    // ===== /users/me =====
 
-    /** GET /users/me */
+    // /users/me
     public void getMe(HttpExchange ex) throws IOException {
         if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) { HttpUtils.methodNotAllowed(ex, "GET"); return; }
         String uname = username(ex);
@@ -62,7 +64,7 @@ public class UserController {
         HttpUtils.sendJson(ex, 200, me);
     }
 
-    /** PUT /users/me — edit own profile */
+    // PUT /users/mе
     public void updateMe(HttpExchange ex) throws IOException {
         if (!"PUT".equalsIgnoreCase(ex.getRequestMethod())) { HttpUtils.methodNotAllowed(ex, "PUT"); return; }
         String uname = username(ex);
@@ -94,7 +96,7 @@ public class UserController {
         }
     }
 
-    /** DELETE /users/me — account owner delete profile */
+    // /users/me
     public void deleteMe(HttpExchange ex) throws IOException {
         if (!"DELETE".equalsIgnoreCase(ex.getRequestMethod())) { HttpUtils.methodNotAllowed(ex, "DELETE"); return; }
         String uname = username(ex);
@@ -105,9 +107,8 @@ public class UserController {
         HttpUtils.sendJson(ex, 200, Map.of("status","deleted"));
     }
 
-    // ===== Roles (ADMIN) =====
 
-    /** PUT /users/{id}/role — onlu ADMIN */
+    // PUT /users/{id}/role — onlu ADMIN
     public void updateRoleById(HttpExchange ex) throws IOException {
         if (!"PUT".equalsIgnoreCase(ex.getRequestMethod())) { HttpUtils.methodNotAllowed(ex, "PUT"); return; }
         if (role(ex) != UserRole.ADMIN) { HttpUtils.sendJson(ex, 403, Map.of("error","forbidden")); return; }
@@ -133,6 +134,8 @@ public class UserController {
         User u = res.get(); u.setPassword(null);
         HttpUtils.sendJson(ex, 200, u);
     }
+
+
     public void listMyOrders(HttpExchange ex) throws IOException {
         HttpUtils.requireMethod(ex, "GET");
         Integer userId = HttpUtils.tryGetUserId(ex, jwt);
@@ -143,7 +146,7 @@ public class UserController {
         String sort = q.getOrDefault("sort", "ordered_desc");
 
         var all = orderDao.findByUserId(userId);
-        var filtered = new java.util.ArrayList<com.example.model.Order>();
+        var filtered = new java.util.ArrayList<Order>();
         for (var o : all) {
             if (o.getStatus() == OrderStatus.CART) continue;
             boolean keep = switch (statusFilter.toLowerCase()) {
@@ -159,14 +162,14 @@ public class UserController {
 
         filtered.sort((a,b) -> {
             var at = a.getOrderedAt(); var bt = b.getOrderedAt();
-            int cmp = java.util.Objects.compare(at, bt, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+            int cmp = Objects.compare(at, bt, Comparator.nullsLast(Comparator.naturalOrder()));
             return "ordered_asc".equalsIgnoreCase(sort) ? cmp : -cmp;
         });
 
-        var views = new java.util.ArrayList<com.example.dto.OrderHistoryView>();
+        var views = new java.util.ArrayList<OrderHistoryView>();
         for (var o : filtered) {
             var cv = cartService.getCart(o.getId());
-            views.add(new com.example.dto.OrderHistoryView(
+            views.add(new OrderHistoryView(
                     cv.orderId(),
                     cv.status(),
                     cv.items(),
@@ -211,7 +214,7 @@ public class UserController {
 
     // ===== Deleting (ADMIN) =====
 
-    /** DELETE /users/{id} — only ADMIN */
+    // DELETE /users/{id} — only ADMIN
     public void deleteById(HttpExchange ex) throws IOException {
         if (!"DELETE".equalsIgnoreCase(ex.getRequestMethod())) { HttpUtils.methodNotAllowed(ex, "DELETE"); return; }
         if (role(ex) != UserRole.ADMIN) { HttpUtils.sendJson(ex, 403, Map.of("error","forbidden")); return; }

@@ -2,9 +2,9 @@ package com.example.service;
 
 import com.example.dao.*;
 import com.example.dao.impl.*;
-import com.example.dto.CartCustomizationView;
-import com.example.dto.CartItemView;
-import com.example.dto.CartView;
+import com.example.dto.cart.CartCustomizationView;
+import com.example.dto.cart.CartItemView;
+import com.example.dto.cart.CartView;
 import com.example.model.*;
 import com.example.model.enums.CustomizationAction;
 import com.example.model.enums.OrderStatus;
@@ -51,7 +51,6 @@ public class CartService {
                     }
                 }
 
-                // гост + валидно cookie
                 return cookieCart.getId();
             }
         }

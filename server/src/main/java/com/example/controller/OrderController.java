@@ -1,7 +1,7 @@
 package com.example.controller;
 
 import com.example.dao.OrderDao;
-import com.example.dto.CartView;
+import com.example.dto.cart.CartView;
 import com.example.http.HttpUtils;
 import com.example.model.enums.UserRole;
 import com.example.security.JwtService;
@@ -58,7 +58,7 @@ public class OrderController {
     public void handleStartPreparing(HttpExchange ex, int orderId) throws IOException {
         HttpUtils.requireMethod(ex, "POST");
         requireAdmin(ex);
-        cart.startPreparing(orderId);             // ORDERED -> PREPARING (+ preparing_at)
+        cart.startPreparing(orderId);
         HttpUtils.sendStatus(ex, 204);
     }
 
@@ -66,7 +66,7 @@ public class OrderController {
     public void handleOutForDelivery(HttpExchange ex, int orderId) throws IOException {
         HttpUtils.requireMethod(ex, "POST");
         requireAdmin(ex);
-        cart.outForDelivery(orderId);             // PREPARING -> OUT_FOR_DELIVERY (+ out_for_delivery_at)
+        cart.outForDelivery(orderId);
         HttpUtils.sendStatus(ex, 204);
     }
 
@@ -74,7 +74,7 @@ public class OrderController {
     public void handleDeliver(HttpExchange ex, int orderId) throws IOException {
         HttpUtils.requireMethod(ex, "POST");
         requireAdmin(ex);
-        cart.deliver(orderId);                    // OUT_FOR_DELIVERY -> DELIVERED (+ delivered_at)
+        cart.deliver(orderId);
         HttpUtils.sendStatus(ex, 204);
     }
 
@@ -82,7 +82,7 @@ public class OrderController {
     public void handleCancel(HttpExchange ex, int orderId) throws IOException {
         HttpUtils.requireMethod(ex, "POST");
         requireAdmin(ex);
-        cart.cancel(orderId);                     // * -> CANCELLED (+ cancelled_at)
+        cart.cancel(orderId);
         HttpUtils.sendStatus(ex, 204);
     }
 

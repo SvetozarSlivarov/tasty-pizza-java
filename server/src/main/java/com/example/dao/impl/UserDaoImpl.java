@@ -32,16 +32,6 @@ public class UserDaoImpl extends AbstractDao implements UserDao {
     }
 
     @Override
-    public User findByUsernameAndPassword(String username, String password) {
-        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
-        try {
-            return queryOne(sql, preparedStatement -> {
-                preparedStatement.setString(1, username);
-                preparedStatement.setString(2, password); }, this::map);
-        } catch (SQLException e) { e.printStackTrace(); return null; }
-    }
-
-    @Override
     public List<User> findAll() {
         String sql = "SELECT * FROM users ORDER BY id";
         try {

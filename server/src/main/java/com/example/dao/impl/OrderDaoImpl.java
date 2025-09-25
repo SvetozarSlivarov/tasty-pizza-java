@@ -113,8 +113,6 @@ public class OrderDaoImpl extends AbstractDao implements OrderDao {
         }
     }
 
-    // ---- timestamps ----
-
     @Override
     public boolean setOrderedNow(int id) {
         String sql = "UPDATE orders SET ordered_at = CURRENT_TIMESTAMP WHERE id = ?";
@@ -201,7 +199,6 @@ public class OrderDaoImpl extends AbstractDao implements OrderDao {
         }
     }
 
-    // mapper
     private Order map(ResultSet rs) throws SQLException {
         Order o = new Order();
         o.setId(rs.getInt("id"));

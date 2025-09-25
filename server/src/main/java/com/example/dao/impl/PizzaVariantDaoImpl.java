@@ -82,7 +82,6 @@ public class PizzaVariantDaoImpl extends AbstractDao implements PizzaVariantDao 
         }
     }
 
-    // Helpers
 
     @Override
     public int deleteAllByPizzaId(int pizzaId) {
@@ -104,7 +103,6 @@ public class PizzaVariantDaoImpl extends AbstractDao implements PizzaVariantDao 
         return count;
     }
 
-    // Mapper
 
     private PizzaVariant map(ResultSet rs) throws SQLException {
         PizzaVariant v = new PizzaVariant();

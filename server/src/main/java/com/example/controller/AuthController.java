@@ -1,9 +1,8 @@
-// src/com/example/controller/AuthController.java
 package com.example.controller;
 
-import com.example.dto.AuthResponse;
-import com.example.dto.LoginRequest;
-import com.example.dto.RegisterRequest;
+import com.example.dto.auth.AuthResponse;
+import com.example.dto.auth.LoginRequest;
+import com.example.dto.auth.RegisterRequest;
 import com.example.http.HttpUtils;
 import com.example.model.enums.UserRole;
 import com.example.security.JwtService;

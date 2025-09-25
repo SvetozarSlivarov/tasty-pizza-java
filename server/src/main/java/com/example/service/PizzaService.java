@@ -4,8 +4,8 @@ import com.example.dao.PizzaDao;
 import com.example.dao.PizzaVariantDao;
 import com.example.dao.impl.PizzaDaoImpl;
 import com.example.dao.impl.PizzaVariantDaoImpl;
-import com.example.dto.ImageUploadRequest;
-import com.example.dto.PizzaDto;
+import com.example.dto.image.ImageUploadRequest;
+import com.example.dto.pizza.PizzaDto;
 import com.example.exception.NotFoundException;
 import com.example.model.Pizza;
 import com.example.model.PizzaVariant;
@@ -45,11 +45,9 @@ public class PizzaService {
     public PizzaDto create(PizzaDto dto) {
         if (dto == null) throw new IllegalArgumentException("PizzaDto is null");
         if (dto.id() != null) throw new IllegalArgumentException("New pizza must not have id");
-
         Pizza toSave = PizzaMapper.fromDto(dto);
         Pizza saved = pizzaDao.save(toSave);
         if (saved == null) throw new RuntimeException("pizza_create_failed");
-
         if (dto.variants() != null && !dto.variants().isEmpty()) {
             List<PizzaVariant> variants = PizzaMapper.variantsFromDto(dto.variants(), saved.getId());
             for (PizzaVariant v : variants) {
@@ -59,7 +57,6 @@ public class PizzaService {
                 }
             }
         }
-
         saved.setVariants(variantDao.findByPizzaId(saved.getId()));
         return PizzaMapper.toDto(saved);
     }

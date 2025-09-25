@@ -11,6 +11,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.sql.Types.INTEGER;
+
 public class OrderItemDaoImpl extends AbstractDao implements OrderItemDao {
 
     @Override
@@ -40,7 +42,7 @@ public class OrderItemDaoImpl extends AbstractDao implements OrderItemDao {
             int newId = updateReturningId(sql, ps -> {
                 ps.setInt(1, item.getOrder().getId());
                 ps.setInt(2, item.getProductId());
-                if (item.getPizzaVariantId() == null) ps.setNull(3, java.sql.Types.INTEGER); else ps.setInt(3, item.getPizzaVariantId());
+                if (item.getPizzaVariantId() == null) ps.setNull(3, INTEGER); else ps.setInt(3, item.getPizzaVariantId());
                 ps.setInt(4, item.getQuantity());
                 ps.setBigDecimal(5, item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO);
                 ps.setString(6, item.getNote());
@@ -76,7 +78,7 @@ public class OrderItemDaoImpl extends AbstractDao implements OrderItemDao {
         String sql = "UPDATE order_items SET pizza_variant_id=?, unit_price=? WHERE id=?";
         try {
             return update(sql, ps -> {
-                if (variantId == null) ps.setNull(1, java.sql.Types.INTEGER); else ps.setInt(1, variantId);
+                if (variantId == null) ps.setNull(1, INTEGER); else ps.setInt(1, variantId);
                 ps.setBigDecimal(2, unitPrice);
                 ps.setInt(3, id);
             }) == 1;

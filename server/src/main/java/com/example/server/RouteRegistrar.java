@@ -29,7 +29,6 @@ public class RouteRegistrar {
         apiR.register("GET",    "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleGet(ex, Integer.parseInt(m.group(1))));
         apiR.register("PATCH",  "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleUpdate(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/pizzas/(\\d+)$",                (ex,m) -> beans.pizzaCtl.handleDelete(ex, Integer.parseInt(m.group(1))));
-        apiR.register("PATCH",  "^/pizzas/(\\d+)/image-url$", (ex, m) -> beans.pizzaCtl.handleUpdateImageUrl(ex, Integer.parseInt(m.group(1))));
         apiR.register("POST", "^/pizzas/(\\d+)/image$",  (ex, m) -> beans.pizzaCtl.handleUploadImage(ex,  Integer.parseInt(m.group(1))));
         // DRINKS
         apiR.register("GET",    "^/drinks$",                (ex,m) -> beans.drinkCtl.handleList(ex));
@@ -105,7 +104,7 @@ public class RouteRegistrar {
         HttpContext health = server.createContext("/health", ex -> HttpUtils.sendText(ex, 200, "OK"));
         addFilters(health, cors, access, null);
 
-        // Catch-all 404
+        // 404
         HttpContext notFound = server.createContext("/", ex -> HttpUtils.sendJson(ex, 404, java.util.Map.of(
                 "error","not_found","path", ex.getRequestURI().getPath())));
         addFilters(notFound, cors, access, null);

@@ -64,21 +64,6 @@ public class OrderItemCustomizationDaoImpl extends AbstractDao implements OrderI
         }
     }
 
-    @Override
-    public boolean removeByItemAndIngredient(int orderItemId, int ingredientId) {
-        String sql = "DELETE FROM order_item_customizations WHERE order_item_id=? AND ingredient_id=?";
-        try {
-            return update(sql, preparedStatement -> {
-                preparedStatement.setInt(1, orderItemId);
-                preparedStatement.setInt(2, ingredientId);
-            }) > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // --- mapper ---
     private OrderCustomization map(ResultSet resultSet) throws SQLException {
         OrderItem orderItem = new OrderItem();
         orderItem.setId(resultSet.getInt("order_item_id"));

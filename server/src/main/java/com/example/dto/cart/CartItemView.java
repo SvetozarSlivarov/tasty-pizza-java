@@ -1,0 +1,19 @@
+package com.example.dto.cart;
+import com.example.dto.cart.CartCustomizationView;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public record CartItemView(
+        int id,
+        int productId,
+        Integer variantId,
+        int quantity,
+        BigDecimal unitPrice,
+        String note,
+        List<CartCustomizationView> customizations,
+        String name,
+        String imageUrl,
+        String type,
+        String variantLabel
+) {}

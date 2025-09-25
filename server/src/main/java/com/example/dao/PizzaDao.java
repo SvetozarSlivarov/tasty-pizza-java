@@ -11,6 +11,4 @@ public interface PizzaDao {
     Pizza save(Pizza pizza);
     Pizza update(Pizza pizza);
     Pizza delete(int id);
-
-    List<PizzaVariant> findVariants(int pizzaId);
 }

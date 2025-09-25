@@ -1,9 +1,9 @@
 package com.example.controller;
 
-import com.example.dto.DrinkCreateRequest;
-import com.example.dto.DrinkResponse;
-import com.example.dto.DrinkUpdateRequest;
-import com.example.dto.ImageUploadRequest;
+import com.example.dto.drink.DrinkCreateRequest;
+import com.example.dto.drink.DrinkResponse;
+import com.example.dto.drink.DrinkUpdateRequest;
+import com.example.dto.image.ImageUploadRequest;
 import com.example.http.HttpUtils;
 import com.example.model.Drink;
 import com.example.model.enums.UserRole;
@@ -26,7 +26,7 @@ public class DrinkController {
         this.jwt = jwt;
     }
 
-    // GET /api/drinks?availableOnly=true
+    // GET /api/drinks?availableOnly=?
     public void handleList(HttpExchange ex) throws IOException {
         HttpUtils.requireMethod(ex, "GET");
         var role = HttpUtils.resolveRole(ex, jwt);

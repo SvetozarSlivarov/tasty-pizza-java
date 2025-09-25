@@ -1,6 +1,13 @@
 package com.example.controller;
 
-import com.example.dto.*;
+import com.example.dto.image.ImageUploadRequest;
+import com.example.dto.ingredient.IngredientTypeView;
+import com.example.dto.ingredient.IngredientView;
+import com.example.dto.ingredient.PizzaAllowedAddRequest;
+import com.example.dto.pizza.PizzaDto;
+import com.example.dto.pizza.PizzaIngredientAddRequest;
+import com.example.dto.pizza.PizzaIngredientUpdateRequest;
+import com.example.dto.pizza.PizzaIngredientView;
 import com.example.http.HttpUtils;
 import com.example.model.Ingredient;
 import com.example.model.enums.UserRole;
@@ -43,7 +50,7 @@ public class PizzaController {
         HttpUtils.sendJson(ex, 200, list);
     }
 
-    // POST /pizzas   (ADMIN) — body: PizzaDto
+    // POST /pizzas   (ADMIN)
     public void handleCreate(HttpExchange ex) throws IOException {
         HttpUtils.requireMethod(ex, "POST");
         HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
@@ -90,28 +97,6 @@ public class PizzaController {
         var req = JsonUtil.fromJson(HttpUtils.readBody(ex), ImageUploadRequest.class);
         var dto = pizzaService.uploadImage(id, req);
         HttpUtils.sendJson(ex, 200, Map.of("id", dto.id(), "imageUrl", dto.imageUrl()));
-    }
-
-    public void handleUpdateImageUrl(HttpExchange ex, int id) throws IOException {
-        HttpUtils.requireMethod(ex, "PATCH");
-        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
-
-        record ImageUrlBody(String url) {}
-        ImageUrlBody b = JsonUtil.fromJson(HttpUtils.readBody(ex), ImageUrlBody.class);
-
-        PizzaDto current = pizzaService.get(id, false);
-        PizzaDto toUpdate = new PizzaDto(
-                id,
-                current.name(),
-                current.description(),
-                current.basePrice(),
-                current.isAvailable(),
-                current.spicyLevel(),
-                (b.url() == null || b.url().isBlank()) ? null : b.url().trim(),
-                current.variants()
-        );
-        PizzaDto updated = pizzaService.update(toUpdate);
-        HttpUtils.sendJson(ex, 200, Map.of("id", updated.id(), "imageUrl", updated.imageUrl()));
     }
 
     // DELETE /pizzas/{id}   (ADMIN)
@@ -173,7 +158,7 @@ public class PizzaController {
         HttpUtils.sendJson(ex, 200, allowed);
     }
 
-    // POST /pizzas/{id}/allowed-ingredients   (ADMIN) — body: PizzaAllowedAddRequest
+    // POST /pizzas/{id}/allowed-ingredients
     public void handleAllowedAdd(HttpExchange ex, int pizzaId) throws IOException {
         HttpUtils.requireMethod(ex, "POST");
         HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);

@@ -153,9 +153,6 @@ public final class HttpUtils {
         if (secure || "None".equalsIgnoreCase(sameSite)) sb.append("; Secure");
         ex.getResponseHeaders().add("Set-Cookie", sb.toString());
     }
-    public static void notFound(HttpExchange ex) throws IOException {
-        sendJson(ex, 404, Map.of("error", "not_found"));
-    }
     public static void send500(HttpExchange ex, Exception e) throws IOException {
         String message = e.getMessage() != null ? e.getMessage() : e.toString();
         sendJson(ex, 500, Map.of(
