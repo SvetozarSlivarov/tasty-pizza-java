@@ -51,7 +51,6 @@ export default function Profile() {
     // Modal state
     const [editOpen, setEditOpen] = useState(false);
 
-    // Load orders
     useEffect(() => {
         (async () => {
             try {

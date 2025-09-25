@@ -23,12 +23,10 @@ public class PizzaIngredientService {
         if (pizzaDao.findById(id) == null) throw new NotFoundException("pizza_not_found");
     }
 
-
     public List<PizzaIngredient> listPizzaIngredients(int pizzaId) {
         ensurePizzaExists(pizzaId);
         return pizzaIngredientDao.findByPizzaId(pizzaId);
     }
-
 
     public List<Ingredient> listAllowedIngredients(int pizzaId) {
         ensurePizzaExists(pizzaId);

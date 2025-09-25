@@ -14,6 +14,7 @@ import {CartProvider} from "./context/CartContext";
 import Profile from "./pages/Profile";
 import AdminHome from "./pages/admin/Home";
 import PizzasAdmin from "./pages/admin/Pizzas";
+import DrinksAdmin from "./pages/admin/Drinks";
 
 function App() {
     return (
@@ -31,6 +32,7 @@ function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/admin" element={<AdminHome />} />
                         <Route path="/admin/pizzas" element={<PizzasAdmin />} />
+                        <Route path="/admin/drinks" element={<DrinksAdmin />}/>
                         <Route path="/register" element={<Register />} />
                         <Route path="/pizza/:id" element={<PizzaDetails />} />
                         <Route path="/drink/:id" element={<DrinkDetails />} />

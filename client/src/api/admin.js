@@ -25,11 +25,12 @@ export const adminApi = {
         http.post(`${PIZZAS}/${id}/image`, { filename, contentType, dataBase64 }),
 
     // Drinks
-    listDrinks: (availableOnly = false) =>
-        http.get(`${DRINKS}?availableOnly=${availableOnly ? "true" : "false"}`),
-    createDrink: (payload) => http.post(DRINKS, payload),
-    updateDrink: (id, payload) => http.patch(`${DRINKS}/${id}`, payload),
-    deleteDrink: (id) => http.del(`${DRINKS}/${id}`),
+    listDrinks: (all = true) => http.get(`/api/drinks?availableOnly=${all ? "false" : "true"}`),
+    createDrink: (payload) => http.post("/api/drinks", payload),
+    updateDrink: (id, payload) => http.patch(`/api/drinks/${id}`, payload),
+    deleteDrink: (id) => http.del(`/api/drinks/${id}`),
+    uploadDrinkImageBase64: (id, { filename, contentType, dataBase64 }) =>
+        http.post(`${DRINKS}/${id}/image`, { filename, contentType, dataBase64 }),
 
     // Ingredients
     listIngredients: () => http.get(INGREDIENTS),

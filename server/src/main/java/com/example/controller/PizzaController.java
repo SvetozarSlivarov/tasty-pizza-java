@@ -39,14 +39,9 @@ public class PizzaController {
         Map<String, String> q = HttpUtils.parseQuery(ex);
         boolean withVariants = "true".equalsIgnoreCase(q.getOrDefault("withVariants", "false"));
 
-        boolean all = "true".equalsIgnoreCase(q.getOrDefault("all", "false"));
-        boolean onlyAvailable = true;
-        if (all) {
-            HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
-            onlyAvailable = false;
-        }
+        boolean all = "false".equalsIgnoreCase(q.getOrDefault("all", "true"));
 
-        var list = pizzaService.list(onlyAvailable, withVariants);
+        var list = pizzaService.list(all, withVariants);
         HttpUtils.sendJson(ex, 200, list);
     }
 

@@ -20,6 +20,7 @@ public class CartService {
     private final PizzaDao pizzaDao = new PizzaDaoImpl();
     private final DrinkDao drinkDao = new DrinkDaoImpl();
     private final PizzaVariantDao variantDao = new PizzaVariantDaoImpl();
+    private final ProductDao productDao = new ProductDaoImpl();
     private final PizzaIngredientDao pizzaIngredientDao = new PizzaIngredientDaoImpl();
     private final PizzaAllowedIngredientDao allowedDao = new PizzaAllowedIngredientDaoImpl();
 
@@ -77,7 +78,7 @@ public class CartService {
         var o = orderDao.findById(orderId);
         if (o == null) throw new IllegalArgumentException("order_not_found");
 
-        var rows = itemDao.findByOrderId(orderId);
+        var rows  = itemDao.findByOrderId(orderId);
         var items = new ArrayList<CartItemView>();
         var total = BigDecimal.ZERO;
 
@@ -90,31 +91,37 @@ public class CartService {
                         c.getAction().name()
                 ));
             }
+            String prodType = java.util.Optional.ofNullable(
+                    productDao.findTypeById(it.getProductId())
+            ).orElse("pizza");
 
             String name;
             String imageUrl;
             String type;
             String variantLabel = null;
 
-            if (it.getPizzaVariantId() != null) {
+            if ("pizza".equalsIgnoreCase(prodType)) {
                 var pizza = pizzaDao.findById(it.getProductId());
-                name = (pizza != null && pizza.getName() != null) ? pizza.getName() : "Pizza";
+                name     = (pizza != null && pizza.getName() != null) ? pizza.getName() : "Pizza";
                 imageUrl = (pizza != null) ? pizza.getImageUrl() : null;
-                type = "pizza";
+                type     = "pizza";
 
-                var variant = variantDao.findById(it.getPizzaVariantId());
-                if (variant != null) {
-                    String size  = (variant.getSize()  != null) ? variant.getSize().name().toLowerCase()  : null;
-                    String dough = (variant.getDough() != null) ? variant.getDough().name().toLowerCase() : null;
-                    if (size != null && dough != null)       variantLabel = size + " · " + dough;
-                    else if (size != null)                   variantLabel = size;
-                    else if (dough != null)                  variantLabel = dough;
+                Integer vid = it.getPizzaVariantId();
+                if (vid != null) {
+                    var variant = variantDao.findById(vid.intValue());
+                    if (variant != null) {
+                        String size  = (variant.getSize()  != null) ? variant.getSize().name().toLowerCase()  : null;
+                        String dough = (variant.getDough() != null) ? variant.getDough().name().toLowerCase() : null;
+                        if (size != null && dough != null)       variantLabel = size + " · " + dough;
+                        else if (size != null)                   variantLabel = size;
+                        else if (dough != null)                  variantLabel = dough;
+                    }
                 }
             } else {
                 var drink = drinkDao.findById(it.getProductId());
-                name = (drink != null && drink.getName() != null) ? drink.getName() : "Drink";
+                name     = (drink != null && drink.getName() != null) ? drink.getName() : "Drink";
                 imageUrl = (drink != null) ? drink.getImageUrl() : null;
-                type = "drink";
+                type     = "drink";
             }
 
             var line = it.getUnitPrice().multiply(BigDecimal.valueOf(it.getQuantity()));

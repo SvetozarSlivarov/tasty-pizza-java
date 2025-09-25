@@ -5,4 +5,6 @@ import java.sql.Connection;
 
 public interface ProductDao {
     BigDecimal findBasePriceById(Connection cx, int productId) throws Exception;
+
+    String findTypeById(int productId);
 }
