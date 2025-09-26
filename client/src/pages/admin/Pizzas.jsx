@@ -3,6 +3,7 @@ import styles from "../../styles/Pizzas.module.css";
 import { adminApi } from "../../api/admin";
 import { fileToBase64 } from "../../utils/fileToBase64";
 import PizzaForm, { normalizePizza } from "./components/PizzaForm";
+import PizzaIngredientsEditor from "./components/PizzaIngredientsEditor";
 
 export default function PizzasAdmin() {
     const [rows, setRows] = useState([]);
@@ -16,11 +17,12 @@ export default function PizzasAdmin() {
     const [imageError, setImageError] = useState(null);
     const [createImageFile, setCreateImageFile] = useState(null);
 
+    const [showIngredientsFor, setShowIngredientsFor] = useState(null);
+
     const load = async () => {
         setLoading(true);
         setError(null);
         try {
-            // Admin view: show all pizzas; variants not needed for the table
             const list = await adminApi.listPizzas(false, true);
             setRows(Array.isArray(list) ? list : []);
         } catch (e) {
@@ -41,7 +43,6 @@ export default function PizzasAdmin() {
             const created = await adminApi.createPizza(payload);
             const id = created?.id;
 
-            // Optional image upload (Base64 -> backend) right after create
             if (id && createImageFile) {
                 const { filename, contentType, base64 } = await fileToBase64(createImageFile);
                 await adminApi.uploadPizzaImageBase64(id, {
@@ -53,7 +54,8 @@ export default function PizzasAdmin() {
 
             setCreating(false);
             setCreateImageFile(null);
-            await load();
+            setShowIngredientsFor(id);
+            setRows(prev => [created, ...prev]);
         } catch (e) {
             alert(e?.message || "Create failed");
         } finally {
@@ -122,7 +124,7 @@ export default function PizzasAdmin() {
     // Edit: fetch full pizza (with variants) before opening the form
     const onEditClick = async (row) => {
         try {
-            const full = await adminApi.getPizza(row.id, true); // withVariants=true
+            const full = await adminApi.getPizza(row.id, true);
             setEditing({ id: full?.id ?? row.id, ...normalizePizza(full) });
         } catch (_) {
             setEditing({ id: row.id, ...normalizePizza(row) });
@@ -159,6 +161,18 @@ export default function PizzasAdmin() {
                 </div>
             )}
 
+            {showIngredientsFor && (
+                <div className={styles.panel}>
+                    <h3 className={styles.panelTitle}>Step 2: Ingredients for new pizza</h3>
+                    <PizzaIngredientsEditor pizzaId={showIngredientsFor} />
+                    <div className={styles.row} style={{ marginTop: 12 }}>
+                        <button className={styles.btn} onClick={() => setShowIngredientsFor(null)}>
+                            Finish
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {editing && (
                 <div className={styles.panel}>
                     <h3 className={styles.panelTitle}>Edit pizza</h3>
@@ -168,6 +182,9 @@ export default function PizzasAdmin() {
                         onCancel={() => setEditing(null)}
                         busy={busy}
                     />
+                    <div style={{ marginTop: 12 }}>
+                        <PizzaIngredientsEditor pizzaId={editing.id} />
+                    </div>
                 </div>
             )}
 

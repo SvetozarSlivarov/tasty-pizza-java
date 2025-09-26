@@ -44,6 +44,28 @@ export const adminApi = {
     updateIngredientType: (id, payload) => http.patch(`${INGREDIENT_TYPES}/${id}`, payload),
     deleteIngredientType: (id) => http.del(`${INGREDIENT_TYPES}/${id}`),
 
+    listPizzaIngredients: (pizzaId) =>
+        http.get(`/api/pizzas/${pizzaId}/ingredients`),
+
+    addPizzaIngredient: (pizzaId, payload) =>
+        http.post(`/api/pizzas/${pizzaId}/ingredients`, payload), // { ingredientId, isRemovable }
+
+    updatePizzaIngredient: (pizzaId, ingredientId, payload) =>
+        http.patch(`/api/pizzas/${pizzaId}/ingredients/${ingredientId}`, payload), // { isRemovable }
+
+    removePizzaIngredient: (pizzaId, ingredientId) =>
+        http.del(`/api/pizzas/${pizzaId}/ingredients/${ingredientId}`),
+
+    // Pizza allowed ingredients
+    listAllowedIngredients: (pizzaId) =>
+        http.get(`/api/pizzas/${pizzaId}/allowed-ingredients`),
+
+    allowIngredientForPizza: (pizzaId, payload) =>
+        http.post(`/api/pizzas/${pizzaId}/allowed-ingredients`, payload),
+
+    disallowIngredientForPizza: (pizzaId, ingredientId) =>
+        http.del(`/api/pizzas/${pizzaId}/allowed-ingredients/${ingredientId}`),
+
     // Users (no list endpoint; role updates only)
     updateUserRoleById: (id, role) => http.put(`${USERS}/${id}/role`, { role }),
     updateUserRoleByUsername: (username, role) =>
