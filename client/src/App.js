@@ -16,6 +16,7 @@ import AdminHome from "./pages/admin/Home";
 import PizzasAdmin from "./pages/admin/Pizzas";
 import DrinksAdmin from "./pages/admin/Drinks";
 import IngredientsAdmin from "./pages/admin/Ingredients";
+import IngredientTypes from "./pages/admin/IngredientTypes";
 
 function App() {
     return (
@@ -35,6 +36,7 @@ function App() {
                         <Route path="/admin/pizzas" element={<PizzasAdmin />} />
                         <Route path="/admin/drinks" element={<DrinksAdmin />}/>
                         <Route path="/admin/ingredients" element={<IngredientsAdmin />} />
+                        <Route path="/admin/ingredient-types" element={<IngredientTypes />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/pizza/:id" element={<PizzaDetails />} />
                         <Route path="/drink/:id" element={<DrinkDetails />} />
