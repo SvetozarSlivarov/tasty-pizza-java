@@ -8,6 +8,7 @@ public interface IngredientDao {
     List<Ingredient> findAll();
     List<Ingredient> findByTypeId(int typeId);
     List<Ingredient> findByIds(List<Integer> ids);
+    int countByTypeId(int typeId);
     boolean save(Ingredient ingredient);
     boolean update(Ingredient ingredient);
     boolean delete(int id);

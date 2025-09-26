@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.dto.ingredient.IngredientTypeCreateDto;
+import com.example.exception.NotFoundException;
 import com.example.http.HttpUtils;
 import com.example.model.IngredientType;
 import com.example.model.enums.UserRole;
@@ -11,6 +12,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public class IngredientTypeController {
     private final IngredientService service;
@@ -57,8 +59,24 @@ public class IngredientTypeController {
     public void handleDelete(HttpExchange ex, int id) throws IOException {
         HttpUtils.requireMethod(ex, "DELETE");
         HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
-        boolean ok = new com.example.dao.impl.IngredientTypeDaoImpl().delete(id);
-        if (!ok) throw new com.example.exception.NotFoundException("ingredient_type_not_found");
-        HttpUtils.sendStatus(ex, 204);
+
+        int used = service.countIngredientsForType(id);
+        if (used > 0) {
+            HttpUtils.sendJson(ex, 409, Map.of(
+                    "error", "type_in_use",
+                    "message", "Cannot delete type: it is referenced by existing ingredients.",
+                    "count", used
+            ));
+            return;
+        }
+
+        try {
+            service.deleteType(id);
+            HttpUtils.sendStatus(ex, 204);
+        } catch (NotFoundException nf) {
+            HttpUtils.sendJson(ex, 404, Map.of("error","ingredient_type_not_found"));
+        } catch (Exception e) {
+            HttpUtils.sendJson(ex, 500, Map.of("error","internal_server_error", "message", e.getMessage()));
+        }
     }
 }

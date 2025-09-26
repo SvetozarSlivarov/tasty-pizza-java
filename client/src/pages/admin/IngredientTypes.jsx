@@ -78,7 +78,14 @@ export default function IngredientTypes() {
                 return Math.min(p, pagesAfter);
             });
         } catch (e) {
-            setError(e?.message || "Delete failed");
+            const status = e?.status || e?.response?.status;
+            if (status === 409) {
+                const data = e?.data || e?.response?.data;
+                const cnt = data?.count ?? "some";
+                setError(`Cannot delete this type: ${cnt} ingredient(s) still use it.`);
+            } else {
+                setError(e?.message || "Delete failed");
+            }
         } finally {
             setBusy(false);
         }

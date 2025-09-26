@@ -63,6 +63,14 @@ public class IngredientService {
 
     public List<IngredientType> types() { return ingredientTypeDao.findAll(); }
 
+    public int countIngredientsForType(int typeId) {
+        return ingredientDao.countByTypeId(typeId);
+    }
+    public void deleteType(int id) {
+        boolean ok = ingredientTypeDao.delete(id);
+        if (!ok) throw new NotFoundException("ingredient_type_not_found");
+    }
+
     public IngredientType createType(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new BadRequestException("type_name_required");

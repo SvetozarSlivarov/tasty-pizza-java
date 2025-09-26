@@ -59,6 +59,15 @@ public class IngredientDaoImpl extends AbstractDao implements IngredientDao {
         }
     }
     @Override
+    public int countByTypeId(int typeId) {
+        final String sql = "SELECT COUNT(*) FROM ingredients WHERE type_id = ?";
+        try {
+            return queryOne(sql, ps -> ps.setInt(1, typeId), rs -> rs.getInt(1));
+        } catch (Exception e) {
+            throw new RuntimeException("countByTypeId_failed for typeId=" + typeId, e);
+        }
+    }
+    @Override
     public List<Ingredient> findByIds(List<Integer> ids) {
         if (ids == null || ids.isEmpty()) return new ArrayList<>();
 
