@@ -62,7 +62,7 @@ public final class HttpUtils {
     }
     public static void requireRole(HttpExchange ex, JwtService jwt, UserRole required) throws IOException {
         UserRole role = roleOr(ex, UserRole.CUSTOMER, jwt);
-        if (role.ordinal() < required.ordinal()) {
+        if (role.ordinal() > required.ordinal()) {
             sendJson(ex, 403, Map.of("error", "forbidden"));
             throw new IllegalStateException("Forbidden: need role " + required);
         }
