@@ -2,24 +2,29 @@ package com.example.service;
 
 import com.example.dao.PizzaDao;
 import com.example.dao.PizzaVariantDao;
+import com.example.dao.impl.OrderItemDaoImpl;
 import com.example.dao.impl.PizzaDaoImpl;
 import com.example.dao.impl.PizzaVariantDaoImpl;
 import com.example.dto.image.ImageUploadRequest;
 import com.example.dto.pizza.PizzaDto;
+import com.example.dto.pizza.PizzaVariantDto;
 import com.example.exception.NotFoundException;
 import com.example.model.Pizza;
 import com.example.model.PizzaVariant;
+import com.example.model.enums.DoughType;
+import com.example.model.enums.PizzaSize;
 import com.example.utils.mapper.PizzaMapper;
 import com.example.storage.StorageService;
 
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PizzaService {
 
     private final PizzaDao pizzaDao = new PizzaDaoImpl();
     private final PizzaVariantDao variantDao = new PizzaVariantDaoImpl();
+
+    private final OrderItemDaoImpl orderItemDao = new OrderItemDaoImpl();
     private final StorageService storage;
 
 
@@ -62,27 +67,101 @@ public class PizzaService {
     }
 
     public PizzaDto update(PizzaDto dto) {
-        if (dto == null || dto.id() == null) throw new IllegalArgumentException("PizzaDto.id is required");
+        if (dto.id() == null) throw new IllegalArgumentException("pizza_id_required");
+        int pizzaId = dto.id();
 
-        Pizza existing = pizzaDao.findById(dto.id());
-        if (existing == null) throw new NotFoundException("pizza_not_found");
+        Pizza current = pizzaDao.findById(pizzaId);
+        if (current == null) throw new NotFoundException("pizza_not_found");
 
-        Pizza toUpdate = PizzaMapper.fromDto(dto);
-        Pizza updated = pizzaDao.update(toUpdate);
-        if (updated == null) throw new RuntimeException("pizza_update_failed");
+        if (dto.name() != null)        current.setName(dto.name());
+        if (dto.description() != null) current.setDescription(dto.description());
+        if (dto.basePrice() != null)   current.setPrice(dto.basePrice());
+        if (dto.isAvailable() != null) current.setAvailable(dto.isAvailable());
+        if (dto.spicyLevel() != null)  current.setSpicyLevel(com.example.model.enums.SpicyLevel.valueOf(dto.spicyLevel()));
+
+        pizzaDao.update(current);
 
         if (dto.variants() != null) {
-            variantDao.deleteAllByPizzaId(dto.id());
-            List<PizzaVariant> variants = PizzaMapper.variantsFromDto(dto.variants(), dto.id());
-            for (PizzaVariant v : variants) {
-                if (variantDao.save(v) == null) {
-                    updated.setVariants(variantDao.findByPizzaId(dto.id()));
-                    return PizzaMapper.toDto(updated);
+            List<PizzaVariant> existing = variantDao.findByPizzaId(pizzaId);
+            Map<Integer, PizzaVariant> existingById = existing.stream()
+                    .collect(Collectors.toMap(PizzaVariant::getId, v -> v));
+
+            record Key(PizzaSize size, DoughType dough) {}
+            Map<Key, PizzaVariant> existingByKey = new HashMap<>();
+            for (var v : existing) {
+                existingByKey.put(new Key(v.getSize(), v.getDough()), v);
+            }
+
+            List<PizzaVariant> incoming = normalizeIncomingVariants(dto.variants(), pizzaId);
+
+            Set<Integer> keepIds = new HashSet<>();
+
+            for (var in : incoming) {
+                if (in.getId() != 0) {
+                    var ex = existingById.get(in.getId());
+                    if (ex == null || ex.getPizzaId() != pizzaId) {
+                        in.setId(0);
+                    } else {
+                        boolean changed = !Objects.equals(ex.getSize(), in.getSize())
+                                || !Objects.equals(ex.getDough(), in.getDough())
+                                || (ex.getExtraPrice() == null ? in.getExtraPrice() != null
+                                : !ex.getExtraPrice().equals(in.getExtraPrice()));
+                        if (changed) {
+                            Key k = new Key(in.getSize(), in.getDough());
+                            PizzaVariant dup = existingByKey.get(k);
+                            if (dup != null && dup.getId() != ex.getId()) {
+                                throw new IllegalArgumentException("variant_duplicate(size,dough)");
+                            }
+                            variantDao.update(in);
+                            existingById.put(in.getId(), in);
+                            existingByKey.put(k, in);
+                        }
+                        keepIds.add(in.getId());
+                    }
+                }
+            }
+
+            for (var in : incoming) {
+                if (in.getId() == 0) {
+                    Key k = new Key(in.getSize(), in.getDough());
+                    PizzaVariant dup = existingByKey.get(k);
+                    if (dup != null) {
+                        boolean changed = dup.getExtraPrice() == null
+                                ? in.getExtraPrice() != null
+                                : !dup.getExtraPrice().equals(in.getExtraPrice());
+                        if (changed) {
+                            PizzaVariant merged = new PizzaVariant();
+                            merged.setId(dup.getId());
+                            merged.setPizzaId(pizzaId);
+                            merged.setSize(dup.getSize());
+                            merged.setDough(dup.getDough());
+                            merged.setExtraPrice(in.getExtraPrice());
+                            variantDao.update(merged);
+                            existingById.put(merged.getId(), merged);
+                            existingByKey.put(k, merged);
+                            keepIds.add(merged.getId());
+                        } else {
+                            keepIds.add(dup.getId());
+                        }
+                    } else {
+                        PizzaVariant created = variantDao.save(in);
+                        existingById.put(created.getId(), created);
+                        existingByKey.put(k, created);
+                        keepIds.add(created.getId());
+                    }
+                }
+            }
+
+            for (var ex : existing) {
+                if (!keepIds.contains(ex.getId())) {
+                    orderItemDao.clearVariantReferences(ex.getId());
+                    variantDao.delete(ex.getId());
                 }
             }
         }
 
-        updated.setVariants(variantDao.findByPizzaId(dto.id()));
+        Pizza updated = pizzaDao.findById(pizzaId);
+        updated.setVariants(variantDao.findByPizzaId(pizzaId));
         return PizzaMapper.toDto(updated);
     }
 
@@ -116,5 +195,24 @@ public class PizzaService {
         Pizza deleted = pizzaDao.delete(id);
         if (deleted == null) throw new NotFoundException("pizza_not_found");
         return PizzaMapper.toDto(deleted);
+    }
+
+    private List<PizzaVariant> normalizeIncomingVariants(List<PizzaVariantDto> dtos, int pizzaId) {
+        if (dtos == null) return List.of();
+        List<PizzaVariant> out = new ArrayList<>();
+        for (var d : dtos) {
+            if (d == null) continue;
+            PizzaVariant v = new PizzaVariant();
+            if (d.id() != null) v.setId(d.id());
+            v.setPizzaId(pizzaId);
+            if (d.size() != null)  v.setSize(PizzaSize.valueOf(d.size()));
+            if (d.dough() != null) v.setDough(DoughType.valueOf(d.dough()));
+            v.setExtraPrice(d.extraPrice());
+            if (v.getSize() == null || v.getDough() == null) {
+                throw new IllegalArgumentException("variant_size_and_dough_required");
+            }
+            out.add(v);
+        }
+        return out;
     }
 }

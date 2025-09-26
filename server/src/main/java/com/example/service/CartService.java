@@ -167,7 +167,7 @@ public class CartService {
         if (qty <= 0) throw new IllegalArgumentException("qty_invalid");
 
         var p = pizzaDao.findById(productId);
-        if (p == null) throw new IllegalArgumentException("pizza_not_found");
+        if (p == null || !p.isAvailable()) throw new IllegalArgumentException("pizza_not_found");
 
         BigDecimal unit = p.getPrice();
         Integer toSet = null;

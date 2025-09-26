@@ -9,4 +9,5 @@ public interface OrderItemDao {
     boolean save(OrderItem item);
     boolean updateQuantity(int id, int qty);
     boolean delete(int id);
+    boolean clearVariantReferences(int variantId);
 }

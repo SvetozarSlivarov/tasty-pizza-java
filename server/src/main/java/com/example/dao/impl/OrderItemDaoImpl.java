@@ -91,6 +91,18 @@ public class OrderItemDaoImpl extends AbstractDao implements OrderItemDao {
             return update(sql, ps -> { ps.setString(1, note); ps.setInt(2, id); }) == 1;
         } catch (SQLException e) { e.printStackTrace(); return false; }
     }
+    @Override
+    public boolean clearVariantReferences(int variantId) {
+        final String sql = "UPDATE order_items SET pizza_variant_id = NULL WHERE pizza_variant_id = ?";
+        try {
+            update(sql, ps -> ps.setInt(1, variantId));
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "clear_variant_refs_failed for variantId=" + variantId, e
+            );
+        }
+    }
 
     private OrderItem map(ResultSet rs) throws SQLException {
         Order order = new Order(); order.setId(rs.getInt("order_id"));
