@@ -53,6 +53,7 @@ public class RouteRegistrar {
         // ingredients
         apiR.register("GET",    "^/ingredients$",                  (ex,m) -> beans.ingredientCtl.handleList(ex));
         apiR.register("POST",   "^/ingredients$",                  (ex,m) -> beans.ingredientCtl.handleCreate(ex));
+        apiR.register("PATCH",  "^/ingredients/(\\d+)/restore$",    (ex, m) -> beans.ingredientCtl.handleRestore(ex, Integer.parseInt(m.group(1))));
         apiR.register("PATCH",  "^/ingredients/(\\d+)$",           (ex,m) -> beans.ingredientCtl.handleUpdate(ex, Integer.parseInt(m.group(1))));
         apiR.register("DELETE", "^/ingredients/(\\d+)$",           (ex,m) -> beans.ingredientCtl.handleDelete(ex, Integer.parseInt(m.group(1))));
 
@@ -65,12 +66,12 @@ public class RouteRegistrar {
         addFilters(api, cors, access, authOptional);
 
         // CART
-        apiR.register("GET",    "^/cart$",                    (ex,m) -> beans.cartCtl.handleGet(ex));
-        apiR.register("POST",   "^/cart/items/pizza$",        (ex,m) -> beans.cartCtl.handleAddPizza(ex));
-        apiR.register("POST",   "^/cart/items/drink$",        (ex,m) -> beans.cartCtl.handleAddDrink(ex));
-        apiR.register("PATCH",  "^/cart/items/(\\d+)$",       (ex,m) -> beans.cartCtl.handleUpdateItem(ex, Integer.parseInt(m.group(1))));
-        apiR.register("DELETE", "^/cart/items/(\\d+)$",       (ex,m) -> beans.cartCtl.handleDeleteItem(ex, Integer.parseInt(m.group(1))));
-        apiR.register("POST",   "^/cart/checkout$",           (ex,m) -> beans.cartCtl.handleCheckout(ex));
+        apiR.register("GET",    "^/cart$",                  (ex, m) -> beans.cartCtl.getCart(ex));
+        apiR.register("POST",   "^/cart/items/pizza$",      (ex, m) -> beans.cartCtl.addPizza(ex));
+        apiR.register("POST",   "^/cart/items/drink$",      (ex, m) -> beans.cartCtl.addDrink(ex));
+        apiR.register("PATCH",  "^/cart/items/(\\d+)$",     (ex, m) -> beans.cartCtl.handleUpdateItem(ex, Integer.parseInt(m.group(1))));
+        apiR.register("DELETE", "^/cart/items/(\\d+)$",     (ex, m) -> beans.cartCtl.handleDeleteItem(ex, Integer.parseInt(m.group(1))));
+        apiR.register("POST",   "^/cart/checkout$",         (ex, m) -> beans.cartCtl.handleCheckout(ex));
         // ORDERS
         apiR.register("GET",  "^/orders/(\\d+)$",
                 (ex, m) -> beans.orderCtl.handleGetOne(ex, Integer.parseInt(m.group(1))));

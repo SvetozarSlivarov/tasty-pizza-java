@@ -32,6 +32,17 @@ public final class HttpUtils {
             throw new RuntimeException("I/O reading request body", e);
         }
     }
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> parseJsonMap(HttpExchange ex) {
+        try (InputStream is = ex.getRequestBody()) {
+            if (is == null) throw new BadRequestException("Empty body");
+            return JsonUtil.fromJson(is, Map.class);
+        } catch (JsonProcessingException e) {
+            throw new BadRequestException("Invalid JSON: " + e.getOriginalMessage());
+        } catch (IOException e) {
+            throw new RuntimeException("I/O reading request body", e);
+        }
+    }
     public static void sendText(HttpExchange ex, int status, String text) throws IOException {
         byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
         ex.getResponseHeaders().set("Content-Type","text/plain; charset=utf-8");
@@ -48,6 +59,13 @@ public final class HttpUtils {
     public static void sendStatus(HttpExchange ex, int statusCode) throws IOException {
         ex.sendResponseHeaders(statusCode, -1);
         ex.close();
+    }
+    public static void sendJsonError(HttpExchange ex, int status, String code, String message, Object details) throws IOException {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", code);
+        if (message != null) body.put("message", message);
+        if (details != null) body.put("details", details);
+        sendJson(ex, status, body);
     }
     public static void methodNotAllowed(HttpExchange ex, String allow) throws IOException {
         ex.getResponseHeaders().set("Allow", allow);

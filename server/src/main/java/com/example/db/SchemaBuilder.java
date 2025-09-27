@@ -113,11 +113,13 @@ public class SchemaBuilder {
     private static void createIngredientsTable(Statement stmt) throws SQLException {
         String sql = """
             CREATE TABLE IF NOT EXISTS ingredients (
-                id INT PRIMARY KEY AUTO_INCREMENT,
-                name VARCHAR(100) NOT NULL,
-                type_id INT,
-                FOREIGN KEY (type_id) REFERENCES ingredient_types(id)
-            )
+                         id INT PRIMARY KEY AUTO_INCREMENT,
+                         name VARCHAR(100) NOT NULL,
+                         type_id INT,
+                         is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+                         deleted_at TIMESTAMP NULL,
+                         FOREIGN KEY (type_id) REFERENCES ingredient_types(id)
+                     )
         """;
         stmt.executeUpdate(sql);
     }

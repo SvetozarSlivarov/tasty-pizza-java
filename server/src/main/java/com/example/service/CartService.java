@@ -11,6 +11,7 @@ import com.example.model.enums.OrderStatus;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CartService {
 
@@ -23,6 +24,7 @@ public class CartService {
     private final ProductDao productDao = new ProductDaoImpl();
     private final PizzaIngredientDao pizzaIngredientDao = new PizzaIngredientDaoImpl();
     private final PizzaAllowedIngredientDao allowedDao = new PizzaAllowedIngredientDaoImpl();
+    private final IngredientDao ingredientDao = new IngredientDaoImpl();
 
     public int ensureCart(Integer userId, Integer cartIdHint) {
         if (cartIdHint != null) {
@@ -77,6 +79,8 @@ public class CartService {
     public CartView getCart(int orderId) {
         var o = orderDao.findById(orderId);
         if (o == null) throw new IllegalArgumentException("order_not_found");
+
+        sanitizeCart(orderId);
 
         var rows  = itemDao.findByOrderId(orderId);
         var items = new ArrayList<CartItemView>();
@@ -201,8 +205,14 @@ public class CartService {
 
         if (!toAdd.isEmpty()) {
             var allowed = new HashSet<>(allowedDao.findIngredientIdsByPizzaId(productId));
+
+            var activeAdds = ingredientDao.findActiveByIds(new ArrayList<>(toAdd)).stream()
+                    .map(Ingredient::getId)
+                    .collect(Collectors.toSet());
+
             for (Integer ing : toAdd) {
                 if (!allowed.contains(ing)) throw new IllegalArgumentException("add_not_allowed");
+                if (!activeAdds.contains(ing)) throw new IllegalArgumentException("addon_unavailable");
             }
         }
 
@@ -247,8 +257,14 @@ public class CartService {
 
         if (!toAdd.isEmpty()) {
             var allowed = new java.util.HashSet<>(allowedDao.findIngredientIdsByPizzaId(p.getId()));
+
+            var activeAdds = ingredientDao.findActiveByIds(new ArrayList<>(toAdd)).stream()
+                    .map(Ingredient::getId)
+                    .collect(Collectors.toSet());
+
             for (Integer ing : toAdd) {
                 if (!allowed.contains(ing)) throw new IllegalArgumentException("add_not_allowed");
+                if (!activeAdds.contains(ing)) throw new IllegalArgumentException("addon_unavailable");
             }
         }
 
@@ -354,7 +370,6 @@ public class CartService {
         orderDao.touch(toCartOrderId);
     }
 
-
     public void startPreparing(int orderId) {
         transition(orderId, OrderStatus.ORDERED, OrderStatus.PREPARING, "cannot_start_preparing");
         if (!orderDao.setPreparingNow(orderId))
@@ -438,5 +453,55 @@ public class CartService {
             itemDao.delete(it.getId());
         }
         orderDao.delete(orderId);
+    }
+    private void sanitizeCart(int orderId) {
+        var items = itemDao.findByOrderId(orderId);
+
+        Set<Integer> allIngIds = new HashSet<>();
+        for (var it : items) {
+            for (var c : custDao.findByOrderItemId(it.getId())) {
+                allIngIds.add(c.getIngredient().getId());
+            }
+        }
+        if (allIngIds.isEmpty()) return;
+
+        Set<Integer> active = ingredientDao.findActiveByIds(new ArrayList<>(allIngIds)).stream()
+                .map(Ingredient::getId)
+                .collect(Collectors.toSet());
+
+        for (var it : items) {
+            var custs = custDao.findByOrderItemId(it.getId());
+            for (var c : custs) {
+                if (!active.contains(c.getIngredient().getId())) {
+                    custDao.remove(c.getId());
+                }
+            }
+        }
+    }
+    public List<String> validateForCheckout(int orderId) {
+        List<String> issues = new ArrayList<>();
+
+        var items = itemDao.findByOrderId(orderId);
+        Set<Integer> allIngIds = new HashSet<>();
+        for (var it : items) {
+            for (var c : custDao.findByOrderItemId(it.getId())) {
+                allIngIds.add(c.getIngredient().getId());
+            }
+        }
+        if (allIngIds.isEmpty()) return issues;
+
+        Set<Integer> active = ingredientDao.findActiveByIds(new ArrayList<>(allIngIds)).stream()
+                .map(Ingredient::getId)
+                .collect(Collectors.toSet());
+
+        for (var it : items) {
+            for (var c : custDao.findByOrderItemId(it.getId())) {
+                int ingId = c.getIngredient().getId();
+                if (!active.contains(ingId)) {
+                    issues.add("addon_unavailable:item=" + it.getId() + ":ing=" + ingId);
+                }
+            }
+        }
+        return issues;
     }
 }

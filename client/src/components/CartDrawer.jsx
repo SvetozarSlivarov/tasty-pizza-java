@@ -95,9 +95,12 @@ export default function CartDrawer() {
 
 
     const handleCheckout = async ({ phone, address }) => {
-        await cart.checkout({ phone, address });
-        setOpenCheckout(false);
-        setShowCelebrate(true);
+        try {
+            await cart.checkout({ phone, address });
+            setOpenCheckout(false);
+            setShowCelebrate(true);
+        } catch (e){
+        }
     };
 
     return (

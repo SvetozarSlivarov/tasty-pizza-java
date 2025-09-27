@@ -63,6 +63,13 @@ public class IngredientController {
         service.delete(id);
         HttpUtils.sendStatus(ex, 204);
     }
+    public void handleRestore(HttpExchange ex, int id) throws IOException {
+        HttpUtils.requireMethod(ex, "PATCH");
+        HttpUtils.requireRole(ex, jwt, UserRole.ADMIN);
+
+        service.restore(id);
+        HttpUtils.sendStatus(ex, 204);
+    }
 
     // === helper: (IngredientView) ===
     private Map<String,Object> toTypeView(Ingredient ing) {

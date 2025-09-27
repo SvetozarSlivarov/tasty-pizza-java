@@ -1,4 +1,3 @@
-// server/src/main/java/com/example/service/IngredientService.java
 package com.example.service;
 
 import com.example.dao.IngredientDao;
@@ -16,8 +15,22 @@ public class IngredientService {
     private final IngredientDao ingredientDao = new IngredientDaoImpl();
     private final IngredientTypeDao ingredientTypeDao = new IngredientTypeDaoImpl();
 
-    public List<Ingredient> findAll() { return ingredientDao.findAll(); }
-    public List<Ingredient> findByType(int typeId) { return ingredientDao.findByTypeId(typeId); }
+    public List<Ingredient> findAll() {
+        return ingredientDao.findAll();
+    }
+
+    public List<Ingredient> findActive() {
+        return ingredientDao.findActive();
+    }
+
+    public List<Ingredient> findByType(int typeId) {
+        return ingredientDao.findByTypeId(typeId);
+    }
+
+    public List<Ingredient> findActiveByType(int typeId) {
+        return ingredientDao.findActiveByTypeId(typeId);
+    }
+
 
     private IngredientType getTypeOrThrow(Integer typeId) {
         if (typeId == null) throw new BadRequestException("ingredient_type_required");
@@ -36,7 +49,6 @@ public class IngredientService {
         if (!ok || toSave.getId() <= 0) {
             throw new RuntimeException("ingredient_create_failed");
         }
-
         return ingredientDao.findById(toSave.getId());
     }
 
@@ -59,13 +71,25 @@ public class IngredientService {
         return ingredientDao.findById(id);
     }
 
-    public boolean delete(int id) { return ingredientDao.delete(id); }
+    public boolean delete(int id) {
+        Ingredient current = ingredientDao.findById(id);
+        if (current == null) throw new NotFoundException("ingredient_not_found");
+        return ingredientDao.delete(id);
+    }
+
+    public boolean restore(int id) {
+        Ingredient current = ingredientDao.findById(id);
+        if (current == null) throw new NotFoundException("ingredient_not_found");
+        return ingredientDao.restore(id);
+    }
+
 
     public List<IngredientType> types() { return ingredientTypeDao.findAll(); }
 
     public int countIngredientsForType(int typeId) {
         return ingredientDao.countByTypeId(typeId);
     }
+
     public void deleteType(int id) {
         boolean ok = ingredientTypeDao.delete(id);
         if (!ok) throw new NotFoundException("ingredient_type_not_found");
