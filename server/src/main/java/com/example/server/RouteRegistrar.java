@@ -85,7 +85,11 @@ public class RouteRegistrar {
                 (ex, m) -> beans.orderCtl.handleCancel(ex, Integer.parseInt(m.group(1))));
         //ADMIN
         apiR.register("POST", "^/admin/prune-guest-carts$", (ex, m) -> beans.maintenanceController.handlePruneGuestCarts(ex));
+        apiR.register("GET", "^/admin/orders$", (ex, m) ->
+                beans.adminOrderCtl.handleList(ex));
 
+        apiR.register("GET", "^/admin/orders/(\\d+)$", (ex, m) ->
+                beans.adminOrderCtl.handleGet(ex, Integer.parseInt(m.group(1))));
         // USERS
         var usersR = new ContextRouter();
         usersR.register("GET", "^/me/orders$", (ex,m) -> beans.userCtl.listMyOrders(ex));

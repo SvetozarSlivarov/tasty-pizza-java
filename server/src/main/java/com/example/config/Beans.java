@@ -1,7 +1,8 @@
 package com.example.config;
 
-import com.example.dao.OrderDao;
-import com.example.dao.impl.OrderDaoImpl;
+import com.example.dao.*;
+import com.example.dao.impl.*;
+import com.example.model.Pizza;
 import io.github.cdimascio.dotenv.Dotenv;
 import com.example.controller.*;
 import com.example.security.JwtService;
@@ -10,7 +11,17 @@ import com.example.storage.CloudinaryStorageService;
 import com.example.storage.StorageService;
 
 public class Beans {
+
+
     public final OrderDao orderDao;
+    public final OrderItemDao orderItemDao;
+    public final DrinkDao drinkDao;
+    public final PizzaDao pizzaDao;
+    public final ProductDao productDao;
+    public final OrderItemCustomizationDao orderItemCustomizationDao;
+    public final PizzaVariantDao pizzaVariantDao;
+    public final IngredientDao ingredientDao;
+
 
     public final JwtService jwt;
     public final UserService users;
@@ -19,6 +30,7 @@ public class Beans {
     public final PizzaIngredientService pizzaIngredient;
     public final DrinkService drinks;
     public final CartService cartService;
+    public final OrderQueryService orderQueryService;
 
     public final AuthController authCtl;
     public final UserController userCtl;
@@ -28,6 +40,7 @@ public class Beans {
     public final DrinkController drinkCtl;
     public final CartController cartCtl;
     public final OrderController orderCtl;
+    public final AdminOrderController adminOrderCtl;
     public final MaintenanceController maintenanceController;
 
     private final StorageService storageService;
@@ -62,11 +75,19 @@ public class Beans {
         this.storageService = new CloudinaryStorageService(cloud, key, sec);
 
         this.orderDao = new OrderDaoImpl();
+        this.drinkDao = new DrinkDaoImpl();
+        this.pizzaVariantDao = new PizzaVariantDaoImpl();
+        this.ingredientDao = new IngredientDaoImpl();
+        this.pizzaDao = new PizzaDaoImpl();
+        this.productDao = new ProductDaoImpl();
+        this.orderItemDao = new OrderItemDaoImpl();
+        this.orderItemCustomizationDao = new OrderItemCustomizationDaoImpl();
 
         this.users           = new UserService();
         this.ingredients     = new IngredientService();
         this.pizzaIngredient = new PizzaIngredientService();
         this.cartService     = new CartService();
+        this.orderQueryService = new OrderQueryService(orderDao, orderItemDao, orderItemCustomizationDao, productDao, pizzaDao, drinkDao, pizzaVariantDao, ingredientDao, users);
 
         this.pizzas = new PizzaService(storageService);
         this.drinks = new DrinkService(storageService);
@@ -80,6 +101,7 @@ public class Beans {
         this.cartCtl           = new CartController(cartService, jwt);
         this.orderCtl          = new OrderController(cartService, jwt, orderDao);
         this.maintenanceController = new MaintenanceController(jwt);
+        this.adminOrderCtl = new AdminOrderController(orderQueryService, jwt);
     }
 
     private static Dotenv tryLoadDotenv() {

@@ -2,6 +2,7 @@ package com.example.dao;
 
 import com.example.model.Order;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 
@@ -23,4 +24,6 @@ public interface OrderDao {
     int deleteGuestCartsOlderThan(Instant cutoff);
 
     boolean delete(int id);
+
+    List<Order> search(String status, String q, Timestamp from, Timestamp to, String sort, int limit, int offset);
 }

@@ -198,6 +198,68 @@ public class OrderDaoImpl extends AbstractDao implements OrderDao {
             return false;
         }
     }
+    @Override
+    public List<Order> search(String status, String q, Timestamp from, Timestamp to, String sort, int limit, int offset) {
+        StringBuilder sql = new StringBuilder("""
+        SELECT id, user_id, status,
+               ordered_at, preparing_at, out_for_delivery_at, delivered_at, cancelled_at,
+               delivery_phone, delivery_address,
+               created_at, updated_at
+          FROM orders
+         WHERE 1=1
+    """);
+        List<Object> params = new ArrayList<>();
+
+        if (status != null && !status.isBlank() && !"all".equalsIgnoreCase(status)) {
+            sql.append(" AND status = ?");
+            params.add(status.toLowerCase());
+        }
+
+        if (from != null) {
+            sql.append(" AND ordered_at >= ?");
+            params.add(from);
+        }
+        if (to != null) {
+            sql.append(" AND ordered_at < ?");
+            params.add(to);
+        }
+
+        if (q != null && !q.isBlank()) {
+            sql.append(" AND (CAST(id AS TEXT) LIKE ? OR LOWER(delivery_phone) LIKE ? OR LOWER(delivery_address) LIKE ?)");
+            String like = "%" + q.toLowerCase() + "%";
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+
+        if ("ordered_at_asc".equalsIgnoreCase(sort)) {
+            sql.append(" ORDER BY ordered_at ASC");
+        } else {
+            sql.append(" ORDER BY ordered_at DESC");
+        }
+
+        sql.append(" LIMIT ? OFFSET ?");
+        params.add(limit <= 0 ? 50 : limit);
+        params.add(Math.max(0, offset));
+
+        try {
+            return queryList(sql.toString(), ps -> {
+                int i = 1;
+                for (Object p : params) {
+                    if (p instanceof Timestamp t) {
+                        ps.setTimestamp(i++, t);
+                    } else if (p instanceof Integer n) {
+                        ps.setInt(i++, n);
+                    } else {
+                        ps.setObject(i++, p);
+                    }
+                }
+            }, this::map);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
 
     private Order map(ResultSet rs) throws SQLException {
         Order o = new Order();
