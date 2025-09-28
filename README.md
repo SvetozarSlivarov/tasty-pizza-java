@@ -82,9 +82,18 @@ java -cp target/classes:target/dependency/* com.example.App
 # http://localhost:8080
 ```
 
-> IntelliJ users: create an Application run configuration with `com.example.App` main class and the env vars above.
 
-### 4) Run the **client**
+> IntelliJ users: create an Application run configuration with `com.example.App` main class and the env vars above.
+#### Loading Sample Data
+After starting the application and creating the database schema,  
+you must execute the `src/main/resources/data.sql` file to load the sample data (pizzas, variants, drinks).
+
+For example, run:
+```bash
+mysql -u <user> -p <database_name> < src/main/resources/data.sql
+```
+
+## 4) Run the **client**
 
 The client is a React app created with CRA; it proxies API requests to `http://localhost:8080` via `package.json` "proxy".
 
