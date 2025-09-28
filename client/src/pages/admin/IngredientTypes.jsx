@@ -35,8 +35,7 @@ export default function IngredientTypes() {
     };
 
     useEffect(() => { refresh(); }, []);
-
-    // CREATE
+    
     const saveCreate = async ({ name }) => {
         setBusy(true); setError(null);
         try {
@@ -51,7 +50,6 @@ export default function IngredientTypes() {
         }
     };
 
-    // UPDATE
     const saveEdit = async (id, { name }) => {
         setBusy(true); setError(null);
         try {
@@ -65,33 +63,6 @@ export default function IngredientTypes() {
         }
     };
 
-    // DELETE
-    const removeRow = async (id) => {
-        if (!window.confirm("Delete ingredient type?")) return;
-        setBusy(true); setError(null);
-        try {
-            await adminApi.deleteIngredientType(id);
-            setRows(prev => prev.filter(r => r.id !== id));
-            setPage(p => {
-                const totalAfter = filteredSorted.length - 1;
-                const pagesAfter = Math.max(1, Math.ceil(totalAfter / pageSize));
-                return Math.min(p, pagesAfter);
-            });
-        } catch (e) {
-            const status = e?.status || e?.response?.status;
-            if (status === 409) {
-                const data = e?.data || e?.response?.data;
-                const cnt = data?.count ?? "some";
-                setError(`Cannot delete this type: ${cnt} ingredient(s) still use it.`);
-            } else {
-                setError(e?.message || "Delete failed");
-            }
-        } finally {
-            setBusy(false);
-        }
-    };
-
-    // derive: search + sort + paginate
     const filteredSorted = useMemo(() => {
         const s = search.trim().toLowerCase();
         const collator = new Intl.Collator(undefined, { sensitivity: "base", numeric: true });
@@ -146,6 +117,7 @@ export default function IngredientTypes() {
                     onCancel={() => setCreating(false)}
                     onSave={saveCreate}
                     busy={busy}
+                    mode="create"
                 />
             )}
 
@@ -155,6 +127,7 @@ export default function IngredientTypes() {
                     onCancel={() => setEditingId(null)}
                     onSave={(payload) => saveEdit(editingId, payload)}
                     busy={busy}
+                    mode="edit"
                 />
             )}
 
@@ -164,7 +137,7 @@ export default function IngredientTypes() {
                         rows={paged}
                         busy={busy}
                         onEdit={(id) => setEditingId(id)}
-                        onDelete={removeRow}
+                        onDelete={null}
                     />
                 </div>
                 <Pagination page={currentPage} totalPages={totalPages} onPage={setPage} />

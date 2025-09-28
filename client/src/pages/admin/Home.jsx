@@ -93,9 +93,8 @@ export default function AdminHome() {
                                 <a className={styles.item} href="/admin/orders" role="listitem">
                                     <span>Orders (transitions)</span>
                                 </a>
-                                <a className={styles.item} role="listitem">
+                                <a className={styles.item} href="/admin/users" role="listitem">
                                     <span>Users (roles)</span>
-                                    <span className={styles.tag}>soon</span>
                                 </a>
                             </div>
                         </div>

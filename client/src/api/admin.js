@@ -37,6 +37,7 @@ export const adminApi = {
     createIngredient: (payload) => http.post(INGREDIENTS, payload),
     updateIngredient: (id, payload) => http.patch(`${INGREDIENTS}/${id}`, payload),
     deleteIngredient: (id) => http.del(`${INGREDIENTS}/${id}`),
+    restoreIngredient: (id) => http.patch(`${INGREDIENTS}/${id}/restore`),
 
     // Ingredient types
     listIngredientTypes: () => http.get(INGREDIENT_TYPES),
@@ -67,7 +68,15 @@ export const adminApi = {
         http.del(`/api/pizzas/${pizzaId}/allowed-ingredients/${ingredientId}`),
 
     // Users (no list endpoint; role updates only)
+    listUsers: (page = 1, size = 50, q) => {
+        const qs = new URLSearchParams({ page: String(page), size: String(size) });
+        if (q && q.trim()) qs.set("q", q.trim());
+        return http.get(`/api/admin/users?${qs.toString()}`);
+    },
     updateUserRoleById: (id, role) => http.put(`${USERS}/${id}/role`, { role }),
     updateUserRoleByUsername: (username, role) =>
         http.put(`${USERS}/by-username/${encodeURIComponent(username)}/role`, { role }),
+    deleteUserById: (id) => http.del(`${USERS}/${id}`),
+    deleteUserByUsername: (username) =>
+        http.del(`${USERS}/by-username/${encodeURIComponent(username)}`),
 };

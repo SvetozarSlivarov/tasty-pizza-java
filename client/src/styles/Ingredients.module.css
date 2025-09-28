@@ -1,4 +1,3 @@
-/* --- Layout & page --- */
 .page {
     --bg: #0f1115;
     --panel: #151922;
@@ -129,7 +128,16 @@
     border-color: rgba(255,255,255,0);
 }
 .btnDanger:hover { box-shadow: 0 8px 24px rgba(239, 68, 68, .25); }
-
+.btnRestore {
+    border-color: rgba(56, 189, 248, .45);
+    background: linear-gradient(180deg, #0b1d2a, #07131d);
+    color: #c8f5ff;
+    font-weight: 600;
+}
+.btnRestore:hover {
+    border-color: rgba(56, 189, 248, .8);
+    background: linear-gradient(180deg, #123144, #0b1d2a);
+}
 /* --- Table --- */
 .tableWrap {
     width: 100%;
@@ -221,4 +229,8 @@ tr:hover .td {
 .ellipsis {
     color: var(--muted);
     margin: 0 4px;
+}
+.actions {
+    display: inline-flex;
+    gap: 8px;
 }

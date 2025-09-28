@@ -42,6 +42,7 @@ public class Beans {
     public final OrderController orderCtl;
     public final AdminOrderController adminOrderCtl;
     public final MaintenanceController maintenanceController;
+    public final AdminUserController adminUserCtl;
 
     private final StorageService storageService;
 
@@ -102,6 +103,7 @@ public class Beans {
         this.orderCtl          = new OrderController(cartService, jwt, orderDao);
         this.maintenanceController = new MaintenanceController(jwt);
         this.adminOrderCtl = new AdminOrderController(orderQueryService, jwt);
+        this.adminUserCtl = new AdminUserController(users, jwt);
     }
 
     private static Dotenv tryLoadDotenv() {

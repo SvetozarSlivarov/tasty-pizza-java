@@ -12,6 +12,8 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.Objects;
 
 public class IngredientController {
     private final IngredientService service;
@@ -77,10 +79,18 @@ public class IngredientController {
         return Map.of("id", ing.getType().getId(), "name", ing.getType().getName());
     }
     private Map<String,Object> toView(Ingredient ing) {
-        return Map.of(
-                "id", ing.getId(),
-                "name", ing.getName(),
-                "type", toTypeView(ing)
-        );
+        Map<String, Object> res = new HashMap<>();
+        res.put("id", ing.getId());
+        res.put("name", ing.getName());
+        Map<String, Object> type = toTypeView(ing);
+        if (type != null) {
+            res.put("type", type);
+        }
+        res.put("deleted", ing.isDeleted());
+        if (ing.getDeletedAt() != null) {
+            res.put("deletedAt", ing.getDeletedAt().toInstant().toString());
+        }
+
+        return res;
     }
 }

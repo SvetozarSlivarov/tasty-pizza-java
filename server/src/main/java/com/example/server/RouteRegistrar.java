@@ -91,6 +91,7 @@ public class RouteRegistrar {
 
         apiR.register("GET", "^/admin/orders/(\\d+)$", (ex, m) ->
                 beans.adminOrderCtl.handleGet(ex, Integer.parseInt(m.group(1))));
+        apiR.register("GET", "^/admin/users$", (ex, m) -> beans.adminUserCtl.handleList(ex));
         // USERS
         var usersR = new ContextRouter();
         usersR.register("GET", "^/me/orders$", (ex,m) -> beans.userCtl.listMyOrders(ex));
