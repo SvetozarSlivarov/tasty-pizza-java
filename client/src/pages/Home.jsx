@@ -189,16 +189,20 @@ export default function Home() {
                                             src={p.imageUrl || FallbackImg}
                                             alt={p.name}
                                             loading="lazy"
+                                            width={640}
+                                            height={480}
                                         />
                                     </div>
                                     <div className="body">
                                         <h3 className="title">{p.name}</h3>
                                         {p.description && <p className="desc">{p.description}</p>}
                                         <div className="meta">
-                                    <span className="price">
-                                        from {Number(p.basePrice ?? p.price).toFixed(2)} EUR
-                                    </span>
-                                            {p.spicyLevel && <span className="badge">Spicy level: {p.spicyLevel}</span>}
+                                            <span className="price">
+                                                from {Number(p.basePrice ?? p.price).toFixed(2)} BGN
+                                            </span>
+                                            {p.spicyLevel && (
+                                                <span className="badge">Spicy level: {p.spicyLevel}</span>
+                                            )}
                                         </div>
                                     </div>
                                 </article>
@@ -238,15 +242,15 @@ export default function Home() {
                                             src={d.imageUrl || FallbackImg}
                                             alt={d.name}
                                             loading="lazy"
+                                            width={640}
+                                            height={480}
                                         />
                                     </div>
                                     <div className="body">
                                         <h3 className="title">{d.name}</h3>
                                         {d.description && <p className="desc">{d.description}</p>}
                                         <div className="meta">
-                      <span className="price">
-                        {Number(d.price).toFixed(2)} EUR
-                      </span>
+                                            <span className="price">{Number(d.price).toFixed(2)} BGN</span>
                                         </div>
                                     </div>
                                 </article>
