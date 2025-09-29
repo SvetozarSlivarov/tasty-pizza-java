@@ -110,18 +110,15 @@
     word-break: break-word;
     white-space: normal;
 }
-/***************
- * THEME TOKENS
- ***************/
 :root {
     --c-bg: #ffffff;
     --c-bg-elev: #ffffff;
-    --c-fg: #0f172a;            /* slate-900 */
-    --c-muted: #64748b;         /* slate-500 */
-    --c-border: #e5e7eb;        /* gray-200 */
-    --c-ring: #6366f1;          /* indigo-500 */
-    --c-danger: #ef4444;        /* red-500 */
-    --c-success: #16a34a;       /* green-600 */
+    --c-fg: #0f172a;
+    --c-muted: #64748b;
+    --c-border: #e5e7eb;
+    --c-ring: #6366f1;
+    --c-danger: #ef4444;
+    --c-success: #16a34a;
     --radius-lg: 14px;
     --radius-md: 10px;
     --shadow-lg: 0 20px 50px rgba(0,0,0,.18);
@@ -143,9 +140,6 @@
     }
 }
 
-/***************
- * BUTTON POLISH
- ***************/
 .btn {
     border-radius: var(--radius-md);
     padding: 10px 14px;
@@ -167,9 +161,6 @@
     cursor: not-allowed;
 }
 
-/********************
- * ICON BUTTONS
- ********************/
 .icon-btn {
     border-radius: 10px;
     transition: background-color var(--transition-fast), transform var(--transition-fast);
@@ -181,9 +172,6 @@
     transform: scale(.98);
 }
 
-/********************
- * FORM CONTROLS
- ********************/
 .field { display: grid; gap: 8px; }
 .field > span {
     font-size: 12px;
@@ -211,19 +199,15 @@
     box-shadow: 0 0 0 4px color-mix(in oklab, var(--c-ring) 18%, transparent);
 }
 
-/* error helper (по желание – ако покажеш .field-error под инпута) */
 .field-error {
     color: var(--c-danger);
     font-size: 12px;
 }
 
-/********************
- * MODAL BACKDROP + SHEET
- ********************/
 .modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(2,6,23,.45); /* slate-950 with alpha */
+    background: rgba(2,6,23,.45);
     display: grid;
     place-items: center;
     z-index: 1000;
@@ -252,9 +236,6 @@
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/********************
- * MODAL LAYOUT
- ********************/
 .modal-header, .modal-footer {
     padding: 16px clamp(16px, 4vw, 22px);
     display: flex; align-items: center; gap: 8px;
@@ -275,16 +256,12 @@
     display: grid; gap: 14px;
 }
 
-/* footer buttons layout */
 .modal-footer {
     border-top: 1px solid var(--c-border);
     justify-content: flex-end;
     gap: 10px;
 }
 
-/********************
- * ACCESSIBILITY
- ********************/
 .modal-sheet:focus-visible,
 .modal-sheet :focus-visible {
     outline: none;
@@ -300,9 +277,6 @@
     }
 }
 
-/********************
- * SMALL TWEAKS FOR CART DRAWER (OPTIONAL)
- ********************/
 .cart-drawer {
     background: var(--c-bg-elev);
     color: var(--c-fg);
@@ -313,7 +287,6 @@
 .cart-footer { border-top: 1px solid var(--c-border); }
 .ci-placeholder { background: linear-gradient(90deg, #f1f5f9, #ffffff 28%, #f1f5f9 56%); }
 
-/* quantity input polish */
 .ci-meta .qty input[type="number"] {
     width: 56px;
     text-align: center;

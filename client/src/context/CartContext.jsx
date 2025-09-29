@@ -1,9 +1,8 @@
-// src/store/CartContext.jsx
 import { createContext, useContext, useEffect, useMemo, useReducer, useCallback } from "react";
 import { cartApi } from "../api/cart";
-// ако имаш notify.js (react-hot-toast), ще го ползваме; ако липсва, ще паднем към alert
+
+
 let notify;
-try { notify = require("../notifications/notify"); } catch { notify = null; }
 
 const CartContext = createContext(null);
 
@@ -40,7 +39,7 @@ function mapServerCart(data) {
         const customizations = Array.isArray(it.customizations)
             ? it.customizations.map((c) => ({
                 ingredientId: c.ingredientId ?? c.id ?? c.ingredientID ?? null,
-                action: String(c.action ?? "").toUpperCase(), // "ADD"/"REMOVE"
+                action: String(c.action ?? "").toUpperCase(),
             }))
             : [];
 
@@ -83,7 +82,6 @@ function reducer(state, action) {
     }
 }
 
-// мек нормализатор на грешки (работи и с axios)
 function getErr(e) {
     const data = e?.response?.data ?? e?.data ?? {};
     return {
@@ -94,7 +92,6 @@ function getErr(e) {
     };
 }
 
-// показване на нотификации (toast или alert fallback)
 function showError(code, message) {
     const text =
         code === "addon_unavailable" ? "This ingredient is no longer available."
@@ -108,7 +105,6 @@ function showError(code, message) {
 function showSuccess(message) {
     if (notify?.notify?.success) notify.notify.success(message);
     else if (notify?.success) notify.success(message);
-    // иначе мълчим
 }
 
 export function CartProvider({ children }) {
@@ -125,17 +121,14 @@ export function CartProvider({ children }) {
         }
     }, []);
 
-    // първоначално зареждане
     useEffect(() => { refresh(); }, [refresh]);
 
-    // слушай глобално cart:refresh (вдига се от axios interceptor при 409)
     useEffect(() => {
         const onRefresh = () => refresh();
         window.addEventListener("cart:refresh", onRefresh);
         return () => window.removeEventListener("cart:refresh", onRefresh);
     }, [refresh]);
 
-    // ---- safe wrapper с автоматичен refresh и приятни съобщения при 409
     async function safe(fn, opts = { refreshOnError: false }) {
         try {
             const res = await fn();
@@ -160,7 +153,6 @@ export function CartProvider({ children }) {
     }
 
     const api = useMemo(() => ({
-        // UI
         isOpen: state.isOpen,
         open: () => dispatch({ type: "OPEN" }),
         close: () => dispatch({ type: "CLOSE" }),
@@ -176,7 +168,6 @@ export function CartProvider({ children }) {
 
         refresh,
 
-        // ---- действия
         async addPizza({ productId, variantId = null, quantity = 1, removeIngredientIds = [], addIngredientIds = [], note = "" }) {
             await safe(() =>
                 cartApi.addPizza({ productId, variantId, quantity, removeIngredientIds, addIngredientIds, note })

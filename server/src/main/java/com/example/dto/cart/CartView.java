@@ -1,7 +1,5 @@
 package com.example.dto.cart;
 
-import com.example.dto.cart.CartItemView;
-
 import java.math.BigDecimal;
 import java.util.List;
 

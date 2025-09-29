@@ -1,23 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { adminOrdersApi, nextActionsForStatus } from "../../api/adminOrders";
 import styles from "../../styles/adminOrders.module.css";
 
 const StatusPill = ({ value }) => (
-    <span className={styles.pill + " " + styles["st-" + String(value || "").toLowerCase()]}>{value}</span>
+    <span className={styles.pill + " " + styles["st-" + String(value || "").toLowerCase()]}>
+    {String(value || "").replace(/_/g, " ")}
+  </span>
 );
 
 export default function AdminOrders() {
+    const navigate = useNavigate();
     const [params, setParams] = useSearchParams();
     const [rows, setRows] = useState([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const page = Number(params.get("page") || 1);
-    const size = Number(params.get("size") || 20);
+    const page   = Number(params.get("page")   || 1);
+    const size   = Number(params.get("size")   || 20);
     const status = params.get("status") || "all";
-    const q = params.get("q") || "";
+    const q      = params.get("q") || "";
 
     function updateParam(name, val) {
         const p = new URLSearchParams(params);
@@ -50,9 +53,13 @@ export default function AdminOrders() {
             </div>
 
             <div className={styles.toolbar}>
-                <label>
-                    Status:&nbsp;
-                    <select value={status} onChange={(e) => updateParam("status", e.target.value)}>
+                <label className={styles.filter}>
+                    <span className={styles.filterLabel}>Status:</span>
+                    <select
+                        className={styles.select}
+                        value={status}
+                        onChange={(e) => updateParam("status", e.target.value)}
+                    >
                         <option value="all">All</option>
                         <option value="ordered">ORDERED</option>
                         <option value="preparing">PREPARING</option>
@@ -61,6 +68,7 @@ export default function AdminOrders() {
                         <option value="cancelled">CANCELLED</option>
                     </select>
                 </label>
+
                 <input
                     type="search"
                     placeholder="Search (username, phone, address, order #)"
@@ -75,52 +83,119 @@ export default function AdminOrders() {
 
             <div className={styles.card}>
                 <div className={styles.body}>
-                    <table className={styles.table}>
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Status</th>
-                            <th>Total</th>
-                            <th>Items</th>
-                            <th>Ordered at</th>
-                            <th>Customer</th>
-                            <th>Phone</th>
-                            <th>Address</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {rows?.length === 0 && !loading && (
-                            <tr><td colSpan="9" className={styles.empty}>No orders.</td></tr>
-                        )}
-                        {rows?.map((r) => (
-                            <tr key={r.orderId}>
-                                <td><Link to={`/admin/orders/${r.orderId}`}>{r.orderNumber ?? r.orderId}</Link></td>
-                                <td><StatusPill value={r.status} /></td>
-                                <td>{Number(r.total).toFixed(2)} лв</td>
-                                <td>{r.itemCount}</td>
-                                <td>{r.orderedAt ? new Date(r.orderedAt).toLocaleString() : "—"}</td>
-                                <td>{r.customerUsername ?? "guest"}</td>
-                                <td>{r.deliveryPhone ?? "—"}</td>
-                                <td className={styles.ellipsis}>{r.deliveryAddress ?? "—"}</td>
-                                <td>
-                                    <RowActions row={r} onChanged={load} />
-                                </td>
+                    <div className={styles.tableWrap}>
+                        <table className={styles.table}>
+                            <thead>
+                            <tr>
+                                <th className={`${styles.th} ${styles.colId}`}>#</th>
+                                <th className={`${styles.th} ${styles.colStatus}`}>Status</th>
+                                <th className={`${styles.th} ${styles.colTotal}`}>Total</th>
+                                <th className={`${styles.th} ${styles.colItems}`}>Items</th>
+                                <th className={`${styles.th} ${styles.colOrderedAt}`}>Ordered at</th>
+                                <th className={`${styles.th} ${styles.colCustomer}`}>Customer</th>
+                                <th className={`${styles.th} ${styles.colPhone}`}>Phone</th>
+                                <th className={`${styles.th} ${styles.colAddress}`}>Address</th>
+                                <th className={`${styles.th} ${styles.colActions}`}>Actions</th>
                             </tr>
-                        ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                            {rows?.length === 0 && !loading && (
+                                <tr><td colSpan="9" className={styles.empty}>No orders.</td></tr>
+                            )}
+
+                            {rows?.map((r) => {
+                                const go = () => navigate(`/admin/orders/${r.orderId}`);
+                                const onRowKey = (e) => {
+                                    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+                                };
+                                return (
+                                    <tr
+                                        key={r.orderId}
+                                        className={styles.clickableRow}
+                                        onClick={go}
+                                        onKeyDown={onRowKey}
+                                        tabIndex={0}
+                                        role="button"
+                                        aria-label={`Open order ${r.orderNumber ?? r.orderId}`}
+                                    >
+                                        <td className={`${styles.td} ${styles.colId}`}>
+                                            <Link
+                                                to={`/admin/orders/${r.orderId}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className={styles.idLink}
+                                            >
+                                                {r.orderNumber ?? r.orderId}
+                                            </Link>
+                                        </td>
+                                        <td className={`${styles.td} ${styles.colStatus}`}><StatusPill value={r.status} /></td>
+                                        <td className={`${styles.td} ${styles.colTotal}`}>{Number(r.total).toFixed(2)} BGN</td>
+                                        <td className={`${styles.td} ${styles.colItems}`}>{r.itemCount}</td>
+                                        <td className={`${styles.td} ${styles.colOrderedAt}`}>{r.orderedAt ? new Date(r.orderedAt).toLocaleString() : "—"}</td>
+                                        <td className={`${styles.td} ${styles.colCustomer}`}>{r.customerUsername ?? "guest"}</td>
+                                        <td className={`${styles.td} ${styles.colPhone}`}>{r.deliveryPhone ?? "—"}</td>
+                                        <td className={`${styles.td} ${styles.colAddress} ${styles.ellipsis}`}>{r.deliveryAddress ?? "—"}</td>
+                                        <td className={`${styles.td} ${styles.colActions}`}>
+                                            <RowActions row={r} onChanged={load} />
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            </tbody>
+                        </table>
+                    </div>
 
                     <div className={styles.pagination}>
-                        <button disabled={page <= 1} onClick={() => updateParam("page", page - 1)}>Prev</button>
-                        <span>Page {page} / {pageCount}</span>
-                        <button disabled={page >= pageCount} onClick={() => updateParam("page", page + 1)}>Next</button>
+                        <div className={styles.pageControls}>
+                            <button
+                                className={styles.btn}
+                                disabled={page <= 1}
+                                onClick={() => updateParam("page", 1)}
+                                aria-label="First page"
+                            >
+                                « First
+                            </button>
+                            <button
+                                className={styles.btn}
+                                disabled={page <= 1}
+                                onClick={() => updateParam("page", page - 1)}
+                                aria-label="Previous page"
+                            >
+                                ‹ Prev
+                            </button>
 
-                        <select value={size} onChange={(e) => updateParam("size", Number(e.target.value))}>
-                            <option value="10">10</option>
-                            <option value="20">20</option>
-                            <option value="50">50</option>
-                        </select>
+                            <span className={styles.pageInfo}>Page {page} / {pageCount}</span>
+
+                            <button
+                                className={styles.btn}
+                                disabled={page >= pageCount}
+                                onClick={() => updateParam("page", page + 1)}
+                                aria-label="Next page"
+                            >
+                                Next ›
+                            </button>
+                            <button
+                                className={styles.btn}
+                                disabled={page >= pageCount}
+                                onClick={() => updateParam("page", pageCount)}
+                                aria-label="Last page"
+                            >
+                                Last »
+                            </button>
+                        </div>
+
+                        <label className={styles.pageSize}>
+                            <span>Per page:</span>
+                            <select
+                                className={styles.select}
+                                value={size}
+                                onChange={(e) => updateParam("size", Number(e.target.value))}
+                                aria-label="Page size"
+                            >
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -130,6 +205,7 @@ export default function AdminOrders() {
 
 function RowActions({ row, onChanged }) {
     const [busy, setBusy] = useState(false);
+
     async function run(action) {
         setBusy(true);
         try {
@@ -141,12 +217,21 @@ function RowActions({ row, onChanged }) {
             setBusy(false);
         }
     }
+
     const actions = nextActionsForStatus(row.status);
     if (actions.length === 0) return <span className={styles.muted}>—</span>;
+
     return (
-        <div className={styles.rowActions}>
+        <div className={styles.rowActions} onClick={(e) => e.stopPropagation()}>
             {actions.map((a) => (
-                <button key={a} disabled={busy} onClick={() => run(a)}>{label(a)}</button>
+                <button
+                    key={a}
+                    className={styles.btn}
+                    disabled={busy}
+                    onClick={(e) => { e.stopPropagation(); run(a); }}
+                >
+                    {label(a)}
+                </button>
             ))}
         </div>
     );

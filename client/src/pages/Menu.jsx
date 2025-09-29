@@ -1,4 +1,3 @@
-// src/pages/Menu.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { catalogApi, productApi } from "../api/catalog";

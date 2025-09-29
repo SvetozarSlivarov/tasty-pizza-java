@@ -87,59 +87,44 @@ export default function AdminOrderDetails() {
             <div className={styles.card}>
                 <div className={styles.body}>
                     <h2 className={styles.sectionTitle}>Items ({data.items?.length ?? 0})</h2>
-                    <table className={styles.table}>
-                        <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Qty</th>
-                            <th>Unit price</th>
-                            <th>Line</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {data.items?.map((it) => (
-                            <tr key={it.id}>
-                                <td className={styles.itemCell}>
-                                    {it.imageUrl && (
-                                        <img alt="" src={it.imageUrl} className={styles.thumb} />
-                                    )}
-                                    <div>
-                                        <div className={styles.itemName}>
-                                            {it.name ?? `${it.type || ""} ${it.productId || ""}`}
-                                        </div>
-                                        {it.variantLabel && (
-                                            <div className={styles.muted} style={{ marginTop: 2 }}>
-                                                {it.variantLabel}
-                                            </div>
-                                        )}
-                                        {Array.isArray(it.customizations) && it.customizations.length > 0 && (
-                                            <div className={styles.customizations}>
-                                                {it.customizations.map((c, idx) => {
-                                                    const text =
-                                                        c.label ||
-                                                        [
-                                                            c.action?.toUpperCase(),
-                                                            c.ingredientName || (c.ingredientId ? `ingredient#${c.ingredientId}` : ""),
-                                                        ]
-                                                            .filter(Boolean)
-                                                            .join(" ");
-                                                    return (
-                                                        <span key={idx} className={styles.tag}>
-                                                            {text}
-                                                        </span>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </div>
-                                </td>
-                                <td>{it.quantity}</td>
-                                <td>{Number(it.unitPrice).toFixed(2)} лв</td>
-                                <td>{Number(it.lineTotal).toFixed(2)} лв</td>
+                    <div className={styles.tableWrap}>
+                        <table className={`${styles.table} ${styles.itemsTable}`}>
+                            <thead>
+                            <tr>
+                                <th className={styles.colProduct}>Product</th>
+                                <th className={styles.colQty}>Qty</th>
+                                <th className={styles.colMoney}>Unit price</th>
+                                <th className={styles.colMoney}>Total</th>
                             </tr>
-                        ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                            {data.items?.map((it) => (
+                                <tr key={it.id}>
+                                    <td className={`${styles.td} ${styles.itemCell}`}>
+                                        {it.imageUrl && <img alt="" src={it.imageUrl} className={styles.thumb} />}
+                                        <div>
+                                            <div className={styles.itemName}>
+                                                {it.name ?? `${it.type || ""} ${it.productId || ""}`}
+                                            </div>
+                                            {it.variantLabel && <div className={styles.muted} style={{ marginTop: 2 }}>{it.variantLabel}</div>}
+                                            {Array.isArray(it.customizations) && it.customizations.length > 0 && (
+                                                <div className={styles.customizations}>
+                                                    {it.customizations.map((c, idx) => {
+                                                        const text = c.label || [c.action?.toUpperCase(), c.ingredientName || (c.ingredientId ? `ingredient#${c.ingredientId}` : "")].filter(Boolean).join(" ");
+                                                        return <span key={idx} className={styles.tag}>{text}</span>;
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className={`${styles.td} ${styles.qty}`}>{it.quantity}</td>
+                                    <td className={`${styles.td} ${styles.money}`}>{Number(it.unitPrice).toFixed(2)} BGN</td>
+                                    <td className={`${styles.td} ${styles.money}`}>{Number(it.lineTotal).toFixed(2)} BGN</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

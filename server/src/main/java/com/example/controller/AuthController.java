@@ -61,4 +61,9 @@ public class AuthController {
 
         HttpUtils.sendJson(ex, 201, new AuthResponse(u.getUsername(), token));
     }
+    public void handleLogout(HttpExchange ex) throws IOException {
+        HttpUtils.requireMethod(ex, "POST");
+        HttpUtils.setCookie(ex, "cartId", "", 0);
+        HttpUtils.sendStatus(ex, 204);
+    }
 }

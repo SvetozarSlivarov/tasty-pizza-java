@@ -84,7 +84,6 @@
     border: 2px solid rgba(255,255,255,.14);
 }
 
-/* hamburger only on small screens */
 .hamburger{
     display: none; appearance: none; border: 0; background: transparent; padding: 8px; cursor: pointer;
 }

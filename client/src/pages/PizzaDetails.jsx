@@ -171,7 +171,6 @@ export default function PizzaDetails() {
             const toRemoveArr = Array.from(removeIds).filter(x => !addIds.has(x));
 
             if (!isEdit) {
-                // --- ADD FLOW ---
                 await cartApi.addPizza({
                     productId: Number(id),
                     variantId: selectedVariant?.id ?? null,
@@ -183,7 +182,6 @@ export default function PizzaDetails() {
                 await cart.refresh().catch(() => {});
                 navigate("/menu");
             } else {
-                // --- EDIT FLOW ---
                 await cartApi.updateItem(Number(editItemId), {
                     quantity: Math.max(1, Number(qty) || 1),
                     variantId: selectedVariant?.id ?? null,
@@ -335,7 +333,6 @@ export default function PizzaDetails() {
     );
 }
 
-/** helpers **/
 function ig(s) { return (s ?? "").trim() || "—"; }
 function cryptoRandom() {
     return Math.random().toString(36).slice(2);

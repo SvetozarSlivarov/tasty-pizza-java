@@ -171,7 +171,6 @@ export default function PizzaIngredientsEditor({ pizzaId }) {
                     </div>
                 </div>
 
-                {/* RIGHT: Allowed ingredients */}
                 <div style={{ flex: 1, minWidth: 320 }}>
                     <div className={styles.panel}>
                         <div className={styles.row} style={{ justifyContent: "space-between" }}>
@@ -206,7 +205,6 @@ export default function PizzaIngredientsEditor({ pizzaId }) {
                 </div>
             </div>
 
-            {/* Catalog to add to either list */}
             <div className={styles.panel}>
                 <h3 className={styles.title} style={{ fontSize: 18, marginBottom: 8 }}>Catalog</h3>
                 <div className={styles.tableWrap}>

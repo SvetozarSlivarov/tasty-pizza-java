@@ -67,7 +67,7 @@ export default function IngredientForm({ types, initial, onCancel, onSave, onCre
                     <button
                         type="button"
                         className={styles.btn}
-                        onClick={() => setShowTypeCreator(s => !s)}
+                        onClick={() => setShowTypeCreator((s) => !s)}
                         disabled={busy || typeBusy}
                     >
                         {showTypeCreator ? "Close" : "+ New Type"}

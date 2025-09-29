@@ -7,7 +7,6 @@ export default function Footer() {
     return (
         <footer className="site-footer">
             <div className="footer-container">
-                {/* Brand */}
                 <div className="footer-col brand">
                     <Link to="/" className="footer-logo">
                         <span className="logo-dot">🍕</span>
@@ -23,7 +22,6 @@ export default function Footer() {
                     <ul>
                         <li><Link to="/">Home</Link></li>
                         <li><Link to="/menu">Menu</Link></li>
-                        <li><Link to="/cart">Cart</Link></li>
                         <li><Link to="/login">Sign in</Link></li>
                     </ul>
                 </nav>
@@ -56,11 +54,11 @@ export default function Footer() {
             <div className="footer-bottom">
                 <p>© {year} Tasty Pizza • All rights reserved</p>
                 <div className="legal">
-                    <a href="#">Privacy</a>
+                    <Link to="/privacy">Privacy</Link>
                     <span>•</span>
-                    <a href="#">Terms</a>
+                    <Link to="/terms">Terms</Link>
                     <span>•</span>
-                    <a href="#">Cookies</a>
+                    <Link to="/cookies">Cookies</Link>
                 </div>
             </div>
 

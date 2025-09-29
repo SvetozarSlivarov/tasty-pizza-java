@@ -9,7 +9,7 @@ export const authApi = {
     async login(payload) {
         const res = await http.post("/auth/login", payload);
         if (res?.token) tokenStore.set(res.token);
-        return res; // { username, token }
+        return res;                                                    // { username, token }
     },
     me: () => http.get("/users/me"),
     async updateMe(payload) {
@@ -17,7 +17,8 @@ export const authApi = {
         if (res?.token) tokenStore.set(res.token);
         return res;
     },
-    logout: async () => {
-        tokenStore.clear();
-    },
+        logout: async () => {
+            try { await http.post("/auth/logout"); } catch {}
+            tokenStore.clear();
+        },
 };

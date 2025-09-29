@@ -40,7 +40,6 @@ export default function Profile() {
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState("");
 
-    // Ingredients
     const [ingredients, setIngredients] = useState([]);
     const ingredientNameMap = useMemo(() => {
         const m = new Map();
@@ -48,7 +47,6 @@ export default function Profile() {
         return m;
     }, [ingredients]);
 
-    // Modal state
     const [editOpen, setEditOpen] = useState(false);
 
     useEffect(() => {
@@ -66,7 +64,6 @@ export default function Profile() {
         })();
     }, [status, sort]);
 
-    // Load all ingredients once
     useEffect(() => {
         (async () => {
             try {

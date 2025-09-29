@@ -18,6 +18,7 @@ public class RouteRegistrar {
         var authR = new ContextRouter();
         authR.register("POST", "^/register$", (ex,m) -> beans.authCtl.handleRegister(ex));
         authR.register("POST", "^/login$",    (ex,m) -> beans.authCtl.handleLogin(ex));
+        authR.register("POST", "^/logout$",   (ex,m) -> beans.authCtl.handleLogout(ex));
         HttpContext auth = server.createContext("/auth", authR::handle);
         addFilters(auth, cors, access, null);
 

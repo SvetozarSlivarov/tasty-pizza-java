@@ -29,6 +29,13 @@ export default function Register() {
             setError("Passwords do not match.");
             return;
         }
+        if (form.fullname.trim().length < 6){
+            setError("Full name must be at least 6 characters.");
+            return
+        }
+        if(form.username.trim().length < 2){
+            setError("Username must be at least 6 characters.")
+        }
 
         const res = await register({
             fullname: form.fullname.trim(),

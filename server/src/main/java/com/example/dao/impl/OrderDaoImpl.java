@@ -210,6 +210,9 @@ public class OrderDaoImpl extends AbstractDao implements OrderDao {
     """);
         List<Object> params = new ArrayList<>();
 
+        sql.append(" AND status <> ?");
+        params.add("cart");
+
         if (status != null && !status.isBlank() && !"all".equalsIgnoreCase(status)) {
             sql.append(" AND status = ?");
             params.add(status.toLowerCase());

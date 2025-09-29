@@ -62,7 +62,6 @@ export default function CartDrawer() {
                     return next;
                 });
             } catch {
-                // ignore
             }
         })();
     }, [cart.isOpen, cart.items, ingNameCache]);
@@ -194,8 +193,8 @@ export default function CartDrawer() {
                                             <div className="price">
                                                 {(it.unitPrice * it.qty).toFixed(2)} BGN
                                                 <span className="muted per">
-                          ({it.unitPrice.toFixed(2)} ea)
-                        </span>
+                                                    ({it.unitPrice.toFixed(2)} ea)
+                                                </span>
                                             </div>
                                         </div>
                                     </div>

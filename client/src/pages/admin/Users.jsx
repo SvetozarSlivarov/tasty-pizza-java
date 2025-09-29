@@ -43,7 +43,7 @@ export default function UsersAdmin() {
         }
     }
 
-    useEffect(() => { load(); /* eslint-disable-next-line */ }, [page, size]);
+    useEffect(() => { load();}, [page, size]);
 
     const clientFiltered = useMemo(() => {
         const term = q.trim().toLowerCase();

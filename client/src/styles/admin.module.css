@@ -137,7 +137,6 @@
     100% { box-shadow: 0 0 0 0 transparent; opacity: .8; }
 }
 
-/* Links list */
 .links {
     display: grid;
     grid-template-columns: 1fr;

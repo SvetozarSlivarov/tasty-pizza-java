@@ -156,7 +156,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* NEWEST PIZZAS */}
             <section className="section">
                 <div className="container">
                     <h2 className="section-title">NEWEST PIZZAS</h2>

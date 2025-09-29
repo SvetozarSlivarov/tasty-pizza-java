@@ -40,7 +40,6 @@ export default function AdminHome() {
                 </div>
 
                 <div className={styles.grid}>
-                    {/* Left column */}
                     <div>
                         <section className={styles.card}>
                             <div className={styles.body}>
@@ -73,7 +72,6 @@ export default function AdminHome() {
                         </section>
                     </div>
 
-                    {/* Right column */}
                     <section className={styles.card}>
                         <div className={styles.body}>
                             <h2 className={styles.sectionTitle}>Quick links</h2>

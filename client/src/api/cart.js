@@ -1,6 +1,5 @@
 import { http } from "./http";
 
-// helpers: назад-совместима конверсия на payload-и
 function toQty(val) {
     if (val == null) return undefined;
     const n = Number(val);

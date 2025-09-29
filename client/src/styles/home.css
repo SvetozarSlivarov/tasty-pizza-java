@@ -15,7 +15,6 @@ a { color: inherit; }
 .section { width: 100%; }
 .container { max-width: var(--max); margin: 0 auto; padding: 0 16px; }
 
-/* ===== HERO ===== */
 .hero { width: 100%; padding: 48px 0 64px; background: rgb(var(--bg)); }
 .hero .container {
     display: grid;
@@ -126,7 +125,6 @@ a { color: inherit; }
 .btn.link{ padding: 8px 0; border:0; font-weight:600; }
 .btn.small{ padding: 10px 12px; font-size:14px; }
 
-/* simple hero art */
 .hero-art{ display:grid; place-items:center; }
 .pizza-card{
     position: relative;
@@ -142,7 +140,6 @@ a { color: inherit; }
     padding: 6px 12px; border-radius: 999px;
 }
 
-/* ===== WHY ===== */
 .why { padding: 56px 0; background: rgb(var(--bg)); }
 .why .container{ text-align:center; }
 .why h2 span{ color: rgb(var(--accent2)); }
@@ -162,7 +159,6 @@ a { color: inherit; }
 .why-grid h3{ margin: 6px 0 8px; }
 .why-grid p{ color: rgba(var(--muted), .92); margin: 0; }
 
-/* ===== MENU PREVIEW ===== */
 .menu-preview { padding: 56px 0; background: rgb(var(--bg)); }
 .menu-preview .head{
     display:flex; justify-content:space-between; align-items:center; gap: 12px;
@@ -185,7 +181,6 @@ a { color: inherit; }
 .card h4{ margin: 6px 0 6px; }
 .card .price{ color: rgb(var(--accent2)); font-weight: 700; margin-bottom: 12px; }
 
-/* ===== TESTIMONIALS ===== */
 .testimonials{ padding: 56px 0; background: rgb(var(--bg)); }
 .testimonials .container{ text-align:center; }
 .testimonials h2{ margin-bottom: 28px; }

@@ -11,7 +11,6 @@ export default function IngredientToolbar({
                                           }) {
     return (
         <div className={styles.panel} style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr 1fr 1fr 1fr", alignItems: "center" }}>
-            {/* Search */}
             <div className={styles.row}>
                 <label className={styles.label}>Search</label>
                 <input
@@ -23,7 +22,6 @@ export default function IngredientToolbar({
                 />
             </div>
 
-            {/* Filter type */}
             <div className={styles.row}>
                 <label className={styles.label}>Type</label>
                 <select
@@ -37,7 +35,6 @@ export default function IngredientToolbar({
                 </select>
             </div>
 
-            {/* Sort */}
             <div className={styles.row}>
                 <label className={styles.label}>Sort</label>
                 <select
@@ -52,7 +49,6 @@ export default function IngredientToolbar({
                 </select>
             </div>
 
-            {/* Direction & Page size */}
             <div className={styles.row}>
                 <label className={styles.label}>Direction</label>
                 <select

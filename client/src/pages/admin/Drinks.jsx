@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import styles from "../../styles/Pizzas.module.css";
+import styles from "../../styles/Drinks.module.css";
 import { adminApi } from "../../api/admin";
 import { fileToBase64 } from "../../utils/fileToBase64";
-import DrinkForm, { normalizeDrink } from "./components/DrinkForm";
+import DrinkForm, {normalizeDrink} from "./components/DrinkForm";
+import Modal from "./components/Modal";
 
 export default function DrinksAdmin() {
     const [rows, setRows] = useState([]);
@@ -41,11 +42,11 @@ export default function DrinksAdmin() {
             if (imageFile) {
                 try {
                     setImageBusy(true);
-                    const dataBase64 = await fileToBase64(imageFile);
+                    const { filename, contentType, base64 } = await fileToBase64(imageFile);
                     await adminApi.uploadDrinkImageBase64(created.id, {
-                        filename: imageFile.name ?? "image.jpg",
-                        contentType: imageFile.type || "image/jpeg",
-                        dataBase64,
+                        filename: filename ?? "image.jpg",
+                        contentType: contentType || "image/jpeg",
+                        dataBase64: base64,
                     });
                 } finally {
                     setImageBusy(false);
@@ -68,11 +69,11 @@ export default function DrinksAdmin() {
             if (imageFile) {
                 try {
                     setImageBusy(true);
-                    const dataBase64 = await fileToBase64(imageFile);
+                    const { filename, contentType, base64 } = await fileToBase64(imageFile);
                     await adminApi.uploadDrinkImageBase64(id, {
-                        filename: imageFile.name ?? "image.jpg",
-                        contentType: imageFile.type || "image/jpeg",
-                        dataBase64,
+                        filename: filename ?? "image.jpg",
+                        contentType: contentType || "image/jpeg",
+                        dataBase64: base64,
                     });
                 } finally {
                     setImageBusy(false);
@@ -87,30 +88,16 @@ export default function DrinksAdmin() {
         }
     }
 
-    async function onDelete(id) {
-        if (!window.confirm("Delete this drink?")) return;
-        try {
-            setBusy(true);
-            setError(null);
-            await adminApi.deleteDrink(id);
-            await load();
-        } catch (e) {
-            setError(e?.message ?? String(e));
-        } finally {
-            setBusy(false);
-        }
-    }
-
     async function onUploadImage(id, file) {
         if (!file) return;
         try {
             setImageBusy(true);
             setImageError(null);
-            const dataBase64 = await fileToBase64(file);
+            const { filename, contentType, base64 } = await fileToBase64(file);
             await adminApi.uploadDrinkImageBase64(id, {
-                filename: file.name ?? "image.jpg",
-                contentType: file.type || "image/jpeg",
-                dataBase64,
+                filename: filename ?? "image.jpg",
+                contentType: contentType || "image/jpeg",
+                dataBase64: base64,
             });
             await load();
         } catch (e) {
@@ -125,9 +112,7 @@ export default function DrinksAdmin() {
             <h1 className={styles.h1}>Drinks (Admin)</h1>
 
             {error && <div className={`${styles.panel} ${styles.error}`}>{error}</div>}
-            {imageError && (
-                <div className={`${styles.panel} ${styles.error}`}>Image: {imageError}</div>
-            )}
+            {imageError && <div className={`${styles.panel} ${styles.error}`}>Image: {imageError}</div>}
 
             <div className={styles.panel}>
                 <div className={styles.row}>
@@ -142,14 +127,6 @@ export default function DrinksAdmin() {
                         Reload
                     </button>
                 </div>
-
-                {creating && (
-                    <DrinkForm
-                        initial={normalizeDrink()}
-                        onSubmit={(payload, img) => onCreate(payload, img)}
-                        onCancel={() => setCreating(false)}
-                    />
-                )}
             </div>
 
             <div className={styles.panel}>
@@ -167,83 +144,73 @@ export default function DrinksAdmin() {
                         </thead>
                         <tbody>
                         {loading ? (
-                            <tr>
-                                <td className={styles.td} colSpan={6}>
-                                    Loading…
-                                </td>
-                            </tr>
+                            <tr><td className={styles.td} colSpan={6}>Loading…</td></tr>
                         ) : rows.length ? (
                             rows.map((r) => (
                                 <tr key={r.id} className={!r.isAvailable ? styles.rowMuted : undefined}>
                                     <td className={styles.td}>{r.id}</td>
-                                    <td className={styles.td}>
-                                        {r.imageUrl ? (
-                                            <img
-                                                src={r.imageUrl}
-                                                alt="drink"
-                                                style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6 }}
-                                            />
-                                        ) : (
-                                            <em>no image</em>
-                                        )}
-                                    </td>
                                     <td className={styles.td}>{r.name}</td>
                                     <td className={styles.td}>BGN {Number(r.price).toFixed(2)}</td>
                                     <td className={styles.td}>
-                                        {r.isAvailable ? (
-                                            <span className={styles.td}>✔</span>
-                                        ) : (
-                                            <span className={styles.td}>✖</span>
-                                        )}
+                                        {r.isAvailable
+                                            ? <span className={styles.ok}>✔</span>
+                                            : <span className={styles.no}>✖</span>}
                                     </td>
-
-
+                                    <td className={styles.td}>
+                                        {r.imageUrl
+                                            ? <img src={r.imageUrl} alt="drink" className={styles.img} />
+                                            : <span className={styles.badge}>no image</span>}
+                                    </td>
                                     <td className={styles.td}>
                                         <div className={styles.row}>
                                             <button className={styles.btn} onClick={() => setEditing(r)}>
                                                 Edit
                                             </button>
-                                            <button
-                                                className={`${styles.btn} ${styles.btnDanger}`}
-                                                onClick={() => onDelete(r.id)}
-                                                disabled={busy}
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                        <div>
                                             <input
                                                 type="file"
                                                 accept="image/*"
                                                 disabled={imageBusy}
-                                                onChange={(e) => onUploadImage(r.id, e.target.files?.[0] || null)}
+                                                onChange={(e) =>
+                                                    onUploadImage(r.id, e.target.files?.[0] || null)
+                                                }
                                             />
                                         </div>
                                     </td>
                                 </tr>
                             ))
                         ) : (
-                            <tr>
-                                <td className={styles.td} colSpan={6}>
-                                    No records.
-                                </td>
-                            </tr>
+                            <tr><td className={styles.td} colSpan={6}>No records.</td></tr>
                         )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {editing && (
-                <div className={styles.panel}>
-                    <h2 className={styles.h2}>Edit drink</h2>
+            <Modal
+                title="New drink"
+                isOpen={creating}
+                onClose={() => setCreating(false)}
+            >
+                <DrinkForm
+                    initial={normalizeDrink()}
+                    onSubmit={(payload, img) => onCreate(payload, img)}
+                    onCancel={() => setCreating(false)}
+                />
+            </Modal>
+
+            <Modal
+                title="Edit drink"
+                isOpen={Boolean(editing)}
+                onClose={() => setEditing(null)}
+            >
+                {editing && (
                     <DrinkForm
                         initial={normalizeDrink(editing)}
                         onSubmit={(payload, img) => onUpdate(editing.id, payload, img)}
                         onCancel={() => setEditing(null)}
                     />
-                </div>
-            )}
+                )}
+            </Modal>
         </div>
     );
 }

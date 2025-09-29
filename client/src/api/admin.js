@@ -28,9 +28,9 @@ export const adminApi = {
     listDrinks: (all = true) => http.get(`/api/drinks?availableOnly=${all ? "false" : "true"}`),
     createDrink: (payload) => http.post("/api/drinks", payload),
     updateDrink: (id, payload) => http.patch(`/api/drinks/${id}`, payload),
-    deleteDrink: (id) => http.del(`/api/drinks/${id}`),
     uploadDrinkImageBase64: (id, { filename, contentType, dataBase64 }) =>
         http.post(`${DRINKS}/${id}/image`, { filename, contentType, dataBase64 }),
+
 
     // Ingredients
     listIngredients: () => http.get(INGREDIENTS),
@@ -39,12 +39,14 @@ export const adminApi = {
     deleteIngredient: (id) => http.del(`${INGREDIENTS}/${id}`),
     restoreIngredient: (id) => http.patch(`${INGREDIENTS}/${id}/restore`),
 
+
     // Ingredient types
     listIngredientTypes: () => http.get(INGREDIENT_TYPES),
     createIngredientType: (payload) => http.post(INGREDIENT_TYPES, payload),
     updateIngredientType: (id, payload) => http.patch(`${INGREDIENT_TYPES}/${id}`, payload),
-    deleteIngredientType: (id) => http.del(`${INGREDIENT_TYPES}/${id}`),
 
+
+    // Pizza ingredient
     listPizzaIngredients: (pizzaId) =>
         http.get(`/api/pizzas/${pizzaId}/ingredients`),
 
@@ -67,7 +69,7 @@ export const adminApi = {
     disallowIngredientForPizza: (pizzaId, ingredientId) =>
         http.del(`/api/pizzas/${pizzaId}/allowed-ingredients/${ingredientId}`),
 
-    // Users (no list endpoint; role updates only)
+    // Users
     listUsers: (page = 1, size = 50, q) => {
         const qs = new URLSearchParams({ page: String(page), size: String(size) });
         if (q && q.trim()) qs.set("q", q.trim());

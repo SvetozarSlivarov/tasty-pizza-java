@@ -57,6 +57,7 @@ export function AuthProvider({ children }) {
     async function logout() {
         await authApi.logout();
         setUser(null);
+        try { window.dispatchEvent(new Event("cart:refresh")); } catch {}
     }
 
     function updateAuth({ user }) {
