@@ -14,6 +14,8 @@ import com.example.service.CartService;
 import com.example.service.UserService;
 import com.example.utils.JsonUtil;
 import com.sun.net.httpserver.HttpExchange;
+import com.example.utils.Validation;
+import com.example.exception.BadRequestException;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -70,29 +72,35 @@ public class UserController {
         String uname = username(ex);
         if (uname == null) { HttpUtils.sendJson(ex, 401, Map.of("error", "unauthorized")); return; }
 
-        UserUpdateRequest req = JsonUtil.fromJson(HttpUtils.readBody(ex), UserUpdateRequest.class);
-        if (req == null) { HttpUtils.sendJson(ex, 400, Map.of("error", "bad_request")); return; }
+        try {
+            UserUpdateRequest req = JsonUtil.fromJson(HttpUtils.readBody(ex), UserUpdateRequest.class);
+            if (req == null) { HttpUtils.sendJson(ex, 400, Map.of("error", "bad_request")); return; }
 
-        Optional<User> updated = users.updateProfile(uname, req.fullname, req.username, req.password);
-        if (updated.isEmpty()) { HttpUtils.sendJson(ex, 400, Map.of("error", "cannot_update")); return; }
+            String fullname = Validation.optionalLength("fullname", req.fullname, 6, 60);
+            String newUsername = Validation.optionalLength("username", req.username, 3, 30);
+            if (newUsername != null) {
+                newUsername = Validation.requirePattern("username", newUsername, "^[A-Za-z0-9._-]+$");
+            }
+            String newPassword = Validation.optionalLength("password", req.password, 6, 100);
 
-        User me = updated.get();
-        me.setPassword(null);
+            Optional<User> updated = users.updateProfile(uname, fullname, newUsername, newPassword);
+            if (updated.isEmpty()) { HttpUtils.sendJson(ex, 400, Map.of("error", "cannot_update")); return; }
 
-        String newToken = null;
-        if (!uname.equals(me.getUsername())) {
-            newToken = jwt.issue(me.getId(), me.getUsername(), me.getRole().name());
-        }
+            User me = updated.get();
+            me.setPassword(null);
 
-        if (newToken != null) {
-            HttpUtils.sendJson(ex, 200, Map.of(
-                    "user", me,
-                    "token", newToken
-            ));
-        } else {
-            HttpUtils.sendJson(ex, 200, Map.of(
-                    "user", me
-            ));
+            String newToken = null;
+            if (!uname.equals(me.getUsername())) {
+                newToken = jwt.issue(me.getId(), me.getUsername(), me.getRole().name());
+            }
+
+            if (newToken != null) {
+                HttpUtils.sendJson(ex, 200, Map.of("user", me, "token", newToken));
+            } else {
+                HttpUtils.sendJson(ex, 200, Map.of("user", me));
+            }
+        } catch (BadRequestException bre) {
+            HttpUtils.sendJson(ex, 400, Map.of("error", bre.getMessage()));
         }
     }
 

@@ -33,8 +33,8 @@ export default function Register() {
             setError("Full name must be at least 6 characters.");
             return
         }
-        if(form.username.trim().length < 2){
-            setError("Username must be at least 6 characters.")
+        if(form.username.trim().length < 3){
+            setError("Username must be at least 3 characters.")
         }
 
         const res = await register({

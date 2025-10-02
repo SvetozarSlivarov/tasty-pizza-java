@@ -146,35 +146,68 @@ public class CartController {
         ensureCartCookie(ex, cartId, orderId);
 
         var req = HttpUtils.parseJson(ex, CheckoutRequest.class);
-        if (req == null || req.phone() == null || req.phone().isBlank()) {
+        if (req == null) {
+            HttpUtils.sendJsonError(ex, 400, "bad_request", "Invalid JSON body.", null);
+            return;
+        }
+
+        String phoneRaw = req.phone();
+        if (phoneRaw == null || phoneRaw.isBlank()) {
             HttpUtils.sendJsonError(ex, 400, "phone_required", "Phone number is required.", null);
             return;
         }
-        if (req.address() == null || req.address().isBlank()) {
+        String phone = phoneRaw.replaceAll("\\s+", "");
+        if (!phone.matches("^(?:\\+359|0)8[7-9]\\d{7}$")) {
+            HttpUtils.sendJsonError(
+                    ex, 400,
+                    "invalid_phone",
+                    "Enter a valid Bulgarian mobile number.",
+                    Map.of("example", "+35988XXXXXXX or 088XXXXXXX")
+            );
+            return;
+        }
+
+        String addressRaw = req.address();
+        if (addressRaw == null || addressRaw.isBlank()) {
             HttpUtils.sendJsonError(ex, 400, "address_required", "Address is required.", null);
             return;
         }
-
+        String address = addressRaw.trim().replaceAll("\\s{2,}", " ");
+        int len = address.length();
+        if (len < 5 || len > 200) {
+            HttpUtils.sendJsonError(
+                    ex, 400,
+                    "invalid_address",
+                    len < 5 ? "Address is too short." : "Address is too long.",
+                    Map.of("min", 5, "max", 200)
+            );
+            return;
+        }
+        if (address.matches(".*\\p{Cntrl}.*")) {
+            HttpUtils.sendJsonError(
+                    ex, 400,
+                    "invalid_address",
+                    "Address contains control characters.",
+                    null
+            );
+            return;
+        }
         var issues = cart.validateForCheckout(orderId);
         if (!issues.isEmpty()) {
-            HttpUtils.sendJsonError(ex, 409, "cart_invalid",
+            HttpUtils.sendJsonError(
+                    ex, 409,
+                    "cart_invalid",
                     "The cart contains invalid or unavailable items.",
-                    Map.of("issues", issues));
+                    Map.of("issues", issues)
+            );
             return;
         }
-
-        try {
-            cart.setDeliveryInfo(orderId, req.phone(), req.address());
-            cart.checkout(orderId);
-        } catch (IllegalStateException ise) {
-            HttpUtils.sendJsonError(ex, 409, "cannot_checkout", "Checkout failed.", null);
-            return;
-        }
-
-        int newCartId = cart.ensureCart(userId, null);
-        HttpUtils.setCookie(ex, "cartId", String.valueOf(newCartId), 60 * 60 * 24 * 30);
-
-        HttpUtils.sendStatus(ex, 204);
+        cart.setDeliveryInfo(orderId, phone, address);
+        cart.checkout(orderId);
+        HttpUtils.sendJson(ex, 200, Map.of(
+                "status", "ok",
+                "orderId", orderId
+        ));
     }
 
     // ===== Helpers =====

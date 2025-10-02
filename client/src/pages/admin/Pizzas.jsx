@@ -108,7 +108,7 @@ export default function PizzasAdmin() {
             await adminApi.uploadPizzaImageBase64(id, {
                 filename: filename ?? "image.jpg",
                 contentType: contentType || "image/jpeg",
-                dataBase64: base64, // <-- важно
+                dataBase64: base64,
             });
             await load();
         } catch (e) {
