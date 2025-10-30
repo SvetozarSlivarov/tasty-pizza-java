@@ -17,7 +17,7 @@ public abstract class AbstractDao {
     public interface Mapper<T> {
         T map(ResultSet resultSet) throws SQLException;
     }
-    private static ResultSet executeQuery(PreparedStatement ps, Binder binder) throws SQLException {
+    private ResultSet executeQuery(PreparedStatement ps, Binder binder) throws SQLException {
         if (binder != null) binder.bind(ps);
         return ps.executeQuery();
     }

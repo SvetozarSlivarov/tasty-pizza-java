@@ -3,6 +3,7 @@ package com.example;
 import com.example.config.Beans;
 import com.example.config.ServerConfig;
 import com.example.db.DatabaseInitializer;
+import com.example.exception.DataInitializationException;
 import com.example.server.RouteRegistrar;
 import com.example.utils.CartJanitor;
 import com.sun.net.httpserver.HttpServer;
@@ -12,8 +13,17 @@ import java.util.concurrent.Executors;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        try { DatabaseInitializer.initialize(); }
-        catch (Throwable t) { System.err.println("FATAL: DB init failed."); t.printStackTrace(); System.exit(1); }
+        try {
+            DatabaseInitializer.initialize();
+        } catch (DataInitializationException e) {
+            System.err.println("FATAL: DB init failed.");
+            e.printStackTrace(System.err);
+            System.exit(3);
+        } catch (Exception e) {
+            System.err.println("FATAL: Unexpected startup error.");
+            e.printStackTrace(System.err);
+            System.exit(1);
+        }
 
         var cfg = ServerConfig.fromEnv();
         var beans = new Beans(cfg);
